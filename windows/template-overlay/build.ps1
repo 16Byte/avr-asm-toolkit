@@ -20,18 +20,17 @@ param(
 $ErrorActionPreference = "Stop"
 
 # --- locate avra + its device-definition includes --------------
-$AvraHome = $env:AVRA_HOME
-if (-not $AvraHome) {
-    Write-Host "ERROR: AVRA_HOME is not set." -ForegroundColor Red
-    Write-Host "Run the toolkit's bootstrap.ps1 once to install avra and set AVRA_HOME." -ForegroundColor Yellow
-    exit 1
-}
+# Find avra: honor $env:AVRA_HOME if set, else fall back to the standard per-user
+# install path the bootstrap uses. This makes the build work even when the calling
+# shell never inherited AVRA_HOME (e.g. an AI assistant running it in a bare shell)
+# -- so nothing ever needs to go hunting across the filesystem.
+$AvraHome = if ($env:AVRA_HOME) { $env:AVRA_HOME } else { Join-Path $env:LOCALAPPDATA "avr-asm-toolkit\avra" }
 $Avra     = Join-Path $AvraHome "avra.exe"
 $Includes = Join-Path $AvraHome "includes"
 
 if (-not (Test-Path $Avra)) {
-    Write-Host "ERROR: avra.exe not found at $Avra (AVRA_HOME=$AvraHome)" -ForegroundColor Red
-    Write-Host "Re-run bootstrap.ps1 to rebuild the runtime." -ForegroundColor Yellow
+    Write-Host "ERROR: avra.exe not found at $Avra" -ForegroundColor Red
+    Write-Host "Run bootstrap.ps1 once to install it. Do NOT search the filesystem." -ForegroundColor Yellow
     exit 1
 }
 if (-not (Test-Path $Src)) {

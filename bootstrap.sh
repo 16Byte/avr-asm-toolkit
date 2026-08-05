@@ -27,7 +27,9 @@ xattr -d com.apple.quarantine "$AVRA_BIN" 2>/dev/null || true
 chmod +x "$AVRA_BIN"
 
 # 2) runtime folder + AVRA_HOME ----------------------------------------------
-RUNTIME="$REPO/.runtime/avra"
+# Standard per-user install path (NOT inside the repo) so the build scripts can
+# default to it without needing AVRA_HOME in the environment.
+RUNTIME="$HOME/.local/share/avr-asm-toolkit/avra"
 mkdir -p "$RUNTIME/includes"
 cp "$AVRA_BIN" "$RUNTIME/avra"
 cp "$REPO/common/avra/includes/"*.inc "$RUNTIME/includes/"

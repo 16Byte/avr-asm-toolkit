@@ -14,13 +14,18 @@ if [ "${1:-}" = "--clean" ]; then CLEAN=1; shift; fi
 SRC="${1:-src/main.asm}"
 OUT="${2:-build/firmware.hex}"
 
-if [ -z "${AVRA_HOME:-}" ]; then
-  echo "ERROR: AVRA_HOME is not set. Run the toolkit's bootstrap.sh once." >&2
-  exit 1
-fi
+# Find avra: honor $AVRA_HOME if set, else fall back to the standard per-user
+# install path the bootstrap uses. This makes the build work even when the calling
+# shell never sourced your profile (e.g. an AI assistant running it in a bare,
+# non-login shell) -- so nothing ever needs to go hunting across the filesystem.
+: "${AVRA_HOME:=$HOME/.local/share/avr-asm-toolkit/avra}"
 AVRA="$AVRA_HOME/avra"
 INC="$AVRA_HOME/includes"
-[ -x "$AVRA" ] || { echo "ERROR: avra not found/executable at $AVRA" >&2; exit 1; }
+if [ ! -x "$AVRA" ]; then
+  echo "ERROR: avra not found at $AVRA" >&2
+  echo "Run the toolkit's bootstrap.sh once to install it. Do NOT search the filesystem." >&2
+  exit 1
+fi
 [ -f "$SRC" ]  || { echo "ERROR: source file not found: $SRC" >&2; exit 1; }
 
 OUTDIR="$(dirname "$OUT")"

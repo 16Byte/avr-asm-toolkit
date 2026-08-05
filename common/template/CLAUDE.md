@@ -6,10 +6,16 @@ This is **not** an Arduino or PlatformIO project — don't add a framework or
 `platformio.ini`, and don't build with avr-gcc/`.S` GNU syntax.
 
 ## Build
-Run the build script (**Ctrl+Shift+B** in VS Code): `build.ps1` on Windows,
-`./build.sh` on macOS. It assembles `src/main.asm` → `build/firmware.hex`.
-Toolchain: `avra`, located via the `AVRA_HOME` env var (set once per machine by
-the toolkit's bootstrap). The PRAGMA/AVRPART notes avra prints are harmless.
+Run the build script from the project root: **`./build.sh`** on macOS or
+**`.\build.ps1`** on Windows (also bound to **Ctrl+Shift+B**). It assembles
+`src/main.asm` → `build/firmware.hex`.
+
+The script already knows where `avra` is — the standard per-user path the toolkit's
+bootstrap installed it to — so just run it. **Do NOT search the filesystem for the
+`avra` binary** (no `find`, no scanning home folders — on macOS that triggers a
+cascade of scary permission prompts). If the script says avra is missing, the
+toolkit bootstrap simply hasn't been run on this machine yet; run that once instead.
+The PRAGMA/AVRPART notes avra prints while assembling are harmless.
 
 ## Run
 Wokwi loads `build/firmware.hex` (see `wokwi.toml`) together with `diagram.json`.

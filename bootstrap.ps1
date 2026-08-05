@@ -30,7 +30,9 @@ if (-not (Test-Path $AvraExe)) {
 }
 
 # 2) runtime folder + AVRA_HOME ----------------------------------------------
-$Runtime = Join-Path $Repo ".runtime\avra"
+# Standard per-user install path (NOT inside the repo) so the build scripts can
+# default to it without needing AVRA_HOME in the environment.
+$Runtime = Join-Path $env:LOCALAPPDATA "avr-asm-toolkit\avra"
 $IncDst  = Join-Path $Runtime "includes"
 New-Item -ItemType Directory -Force -Path $IncDst | Out-Null
 Copy-Item $AvraExe (Join-Path $Runtime "avra.exe") -Force

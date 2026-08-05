@@ -1,0 +1,6 @@
+[wokwi]
+version = 1
+# avra emits Intel HEX (no ELF), so we point Wokwi at the hex.
+# Source-level debugging needs an ELF and is not available with avra;
+# the simulation itself (LEDs, I/O, timing) works from the hex alone.
+firmware = 'build/firmware.hex'

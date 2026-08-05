@@ -1,0 +1,7 @@
+# machine-local runtime assembled by bootstrap (binary + includes copy)
+.runtime/
+
+# build artifacts
+**/build/
+**/obj/
+*.o

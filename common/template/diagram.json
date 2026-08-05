@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "author": "Diego Jimenez",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "wokwi-arduino-uno", "id": "uno", "top": 0, "left": 0, "attrs": {} },
+    {
+      "type": "wokwi-led",
+      "id": "led1",
+      "top": -72.13,
+      "left": 24.33,
+      "attrs": { "color": "red" }
+    }
+  ],
+  "connections": [
+    [ "led1:A", "uno:13", "green", [ "v12.86", "h70", "v21.33", "h5.33" ] ],
+    [ "led1:C", "uno:GND.1", "green", [ "v18.2", "h6", "v3.33", "h66" ] ]
+  ],
+  "dependencies": {}
+}

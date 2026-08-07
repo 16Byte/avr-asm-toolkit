@@ -24,7 +24,6 @@ Claude to help you build an assignment *and explain it as you go* (more below).
 git clone https://github.com/16Byte/avr-asm-toolkit.git $env:USERPROFILE\avr-asm-toolkit
 cd $env:USERPROFILE\avr-asm-toolkit
 .\bootstrap.ps1
-# open a NEW terminal so AVRA_HOME is set, then:
 .\windows\New-AvrProject.ps1 Lab1 -Open
 ```
 
@@ -32,11 +31,13 @@ cd $env:USERPROFILE\avr-asm-toolkit
 ```bash
 git clone https://github.com/16Byte/avr-asm-toolkit.git ~/avr-asm-toolkit
 cd ~/avr-asm-toolkit
-# first time only, to build avra: xcode-select --install
 bash bootstrap.sh
-source ~/.zprofile               # load AVRA_HOME into this shell
-./macos/new-avr-project.sh Lab1 --open
+bash macos/new-avr-project.sh Lab1 --open
 ```
+
+> **macOS note:** on **Apple Silicon** the committed avra binary is used as-is — no
+> compiler needed. On an **Intel Mac** (or if bootstrap reports it can't run avra),
+> run `xcode-select --install`, then `bash bootstrap.sh` again to build it from source.
 
 In the generated project: **Ctrl+Shift+B** builds `build/firmware.hex`, then run
 **Wokwi: Start Simulator** (install the **Wokwi** VS Code extension first).
@@ -88,8 +89,9 @@ bootstrap.ps1 / bootstrap.sh
 - **Claude Code** — the AI tutor/pair-programmer (optional but the whole point).
 - **Python 3** (optional) — only for the `wokwi-diagram` skill's helper
   (`py -3` on Windows, `python3` on macOS).
-- **macOS only:** Xcode Command Line Tools, to build `avra` the first time. After
-  that first build, commit `macos/avra/avra` so future Mac clones are instant.
+- **macOS only, and only as a fallback:** Xcode Command Line Tools. Apple-Silicon
+  clones use the committed `macos/avra/avra` (arm64) as-is — no compiler needed. You
+  only need Xcode CLT on an Intel Mac, or to rebuild the binary yourself.
 
 ## Rebuilding avra
 Prebuilt binaries are committed for instant restore, but the source

@@ -38,3 +38,29 @@ OUTBASE="${OUT%.*}"
 echo "avra: $SRC -> $OUT"
 "$AVRA" -I "$INC" -o "$OUT" -e "$OUTBASE.eep.hex" -d "$OUTBASE.obj" "$SRC"
 echo "Build OK -> $OUT"
+
+# --- Wokwi license reminder (non-blocking, estimate only) --------------------
+# Free Wokwi keys last ~30 days. We can't read the real expiry (it's in VS Code's
+# encrypted secret store), so we estimate from a date stamp written at bootstrap
+# and refreshed by reset-wokwi-license.sh. This must never affect the build.
+if [ "${AVR_TOOLKIT_NO_LICENSE_WARN:-}" != "1" ]; then
+  stamp="$AVRA_HOME/wokwi-license-stamp"
+  if [ -f "$stamp" ]; then
+    val="$(grep -E '^[[:space:]]*activated[[:space:]]*=' "$stamp" 2>/dev/null | head -1 | cut -d= -f2 | tr -d '[:space:]' || true)"
+    act="$(date -j -f "%Y-%m-%d" "$val" "+%s" 2>/dev/null || true)"
+    if [ -n "$act" ]; then
+      days=$(( ( $(date "+%s") - act ) / 86400 ))
+      if [ "$days" -ge 24 ]; then   # 0-23 and future (negative) stay silent
+        if [ "$days" -ge 30 ]; then
+          echo "[wokwi] Your Wokwi license was set ~$days days ago and has probably expired (free keys last ~30)."
+        else
+          echo "[wokwi] Your Wokwi license was set ~$days days ago; free keys last ~30."
+        fi
+        echo "        Renew: F1 in VS Code -> 'Wokwi: Request a new License'"
+        echo "        Then record it: run reset-wokwi-license.sh in your avr-asm-toolkit,"
+        echo "        or edit $stamp and set today's date."
+        echo "        (estimate only; silence with AVR_TOOLKIT_NO_LICENSE_WARN=1)"
+      fi
+    fi
+  fi
+fi

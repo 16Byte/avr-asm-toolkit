@@ -99,6 +99,15 @@ diagram editor there — same result as the web editor, just in-editor instead o
 Tiers 2 and 3 need no Claude Code, so you can build any circuit the course throws at you
 with just VS Code + Wokwi (free).
 
+## Keeping the Wokwi license fresh
+The free key lasts about 30 days. When it lapses, renew in VS Code
+(F1 → `Wokwi: Request a new License`) and record the date so the reminder resets: run
+`windows\Reset-WokwiLicense.ps1` or `bash macos/reset-wokwi-license.sh` (or just edit the
+`wokwi-license-stamp` file in your toolkit runtime). Builds print a gentle, **non-blocking**
+reminder as you near the 30-day mark — silence it any time with
+`AVR_TOOLKIT_NO_LICENSE_WARN=1`. It's an estimate anchored on your last renewal (Wokwi keeps
+the real expiry in an encrypted store the toolkit deliberately doesn't touch), not a live check.
+
 ## How it's meant to be used — learning with Claude Code
 The point isn't to have code written *for* you; it's to have a tutor that never
 gets tired. Open a generated project in VS Code with **Claude Code** and try things

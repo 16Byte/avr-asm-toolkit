@@ -41,6 +41,19 @@ Copy-Item (Join-Path $Repo "common\avra\includes\*") $IncDst -Recurse -Force
 $env:AVRA_HOME = $Runtime
 Write-Host "AVRA_HOME = $Runtime  (persisted for your user)" -ForegroundColor Green
 
+# start the Wokwi license clock at first setup (don't clobber an existing stamp)
+$Stamp = Join-Path $Runtime "wokwi-license-stamp"
+if (-not (Test-Path $Stamp)) {
+    $today = Get-Date -Format 'yyyy-MM-dd'
+    @(
+        "# avr-asm-toolkit wokwi license stamp",
+        "# Date the Wokwi VS Code license was last activated/renewed (YYYY-MM-DD).",
+        "# Edit by hand if it drifts, or run Reset-WokwiLicense.ps1 after you renew.",
+        "activated=$today"
+    ) | Set-Content -Path $Stamp -Encoding UTF8
+    Write-Host "License stamp started ($today)." -ForegroundColor Green
+}
+
 # 3) install the wokwi-diagram skill -----------------------------------------
 $SkillSrc  = Join-Path $Repo "common\skill\wokwi-diagram"
 $SkillsDir = Join-Path $env:USERPROFILE ".claude\skills"

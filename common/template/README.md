@@ -22,6 +22,10 @@ Rebuild (Ctrl+Shift+B) and restart the simulation after each change to your asse
 The simulator needs an internet connection (offline mode:
 https://docs.wokwi.com/vscode/offline-mode).
 
+The free Wokwi key lasts ~30 days. Builds show a gentle, non-blocking reminder near expiry;
+when it lapses, renew (same F1 command) and run `reset-wokwi-license` (or edit the
+`wokwi-license-stamp` file) so the reminder resets.
+
 ## Changing the circuit
 Three ways, only the first needs Claude Code:
 - **Claude Code** — ask it; the `wokwi-diagram` skill edits `diagram.json` with correct

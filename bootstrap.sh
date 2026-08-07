@@ -40,6 +40,19 @@ fi
 export AVRA_HOME="$RUNTIME"
 echo "AVRA_HOME = $RUNTIME  (added to ~/.zprofile)"
 
+# start the Wokwi license clock at first setup (don't clobber an existing stamp)
+STAMP="$RUNTIME/wokwi-license-stamp"
+if [ ! -f "$STAMP" ]; then
+  TODAY="$(date +%Y-%m-%d)"
+  {
+    echo "# avr-asm-toolkit wokwi license stamp"
+    echo "# Date the Wokwi VS Code license was last activated/renewed (YYYY-MM-DD)."
+    echo "# Edit by hand if it drifts, or run macos/reset-wokwi-license.sh after you renew."
+    echo "activated=$TODAY"
+  } > "$STAMP"
+  echo "License stamp started ($TODAY)."
+fi
+
 # 3) install the wokwi-diagram skill -----------------------------------------
 SKILL_SRC="$REPO/common/skill/wokwi-diagram"
 SKILL_DST="$HOME/.claude/skills/wokwi-diagram"

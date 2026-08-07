@@ -57,3 +57,31 @@ if ($code -ne 0) {
     exit $code
 }
 Write-Host "Build OK -> $Out" -ForegroundColor Green
+
+# --- Wokwi license reminder (non-blocking, estimate only) --------------------
+# Free Wokwi keys last ~30 days. We can't read the real expiry (it's in VS Code's
+# encrypted secret store), so we estimate from a date stamp written at bootstrap
+# and refreshed by Reset-WokwiLicense.ps1. This must never affect the build.
+if ($env:AVR_TOOLKIT_NO_LICENSE_WARN -ne "1") {
+    try {
+        $stamp = Join-Path $AvraHome "wokwi-license-stamp"
+        if (Test-Path $stamp) {
+            $line = (Select-String -Path $stamp -Pattern '^\s*activated\s*=' | Select-Object -First 1).Line
+            $val  = if ($line) { ($line -split '=', 2)[1].Trim() } else { $null }
+            $act  = [datetime]::MinValue
+            if ($val -and [datetime]::TryParseExact($val, 'yyyy-MM-dd', [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::None, [ref]$act)) {
+                $days = ([datetime]::Today - $act.Date).Days
+                if ($days -ge 24) {   # 0-23 and future (negative) stay silent
+                    $state = if ($days -ge 30) { "was set ~$days days ago and has probably expired (free keys last ~30)." }
+                             else { "was set ~$days days ago; free keys last ~30." }
+                    Write-Host ""
+                    Write-Host "[wokwi] Your Wokwi license $state" -ForegroundColor Yellow
+                    Write-Host "        Renew: F1 in VS Code -> 'Wokwi: Request a new License'" -ForegroundColor Yellow
+                    Write-Host "        Then record it: run Reset-WokwiLicense.ps1 in your avr-asm-toolkit," -ForegroundColor Yellow
+                    Write-Host "        or edit $stamp and set today's date." -ForegroundColor Yellow
+                    Write-Host "        (estimate only; silence with AVR_TOOLKIT_NO_LICENSE_WARN=1)" -ForegroundColor DarkGray
+                }
+            }
+        }
+    } catch { }   # a reminder must never break a build
+}

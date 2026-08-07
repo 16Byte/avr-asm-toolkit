@@ -39,8 +39,29 @@ bash macos/new-avr-project.sh Lab1 --open
 > compiler needed. On an **Intel Mac** (or if bootstrap reports it can't run avra),
 > run `xcode-select --install`, then `bash bootstrap.sh` again to build it from source.
 
-In the generated project: **Ctrl+Shift+B** builds `build/firmware.hex`, then run
-**Wokwi: Start Simulator** (install the **Wokwi** VS Code extension first).
+## Prerequisites (not auto-installed)
+- **VS Code + the Wokwi extension** — the simulator.
+- **Git** — to clone.
+- **Claude Code** — the AI tutor/pair-programmer (optional).
+- **Python 3** (optional) — only for the `wokwi-diagram` skill's helper
+  (`py -3` on Windows, `python3` on macOS).
+- **macOS only, and only as a fallback:** Xcode Command Line Tools. Apple-Silicon
+  clones use the committed `macos/avra/avra` (arm64) as-is — no compiler needed. You
+  only need Xcode CLT on an Intel Mac, or to rebuild the binary yourself.
+
+## See the blink
+The generated project ships with a ready-made circuit in `diagram.json` (an LED on
+pin 13). To run it:
+
+1. **Install the Wokwi extension** in VS Code — open the Extensions panel and search
+   for **"Wokwi Simulator"**. One-time, and the simulation won't run without it.
+2. **Build the firmware:** press **Ctrl+Shift+B** (produces `build/firmware.hex`).
+3. **Open `diagram.json`** — that file *is* the Wokwi simulation (the virtual
+   Arduino Uno + its wiring). Opening it launches the simulator view; press the
+   green **play** button to start.
+
+The on-board LED starts blinking. After any change to your assembly, rebuild
+(Ctrl+Shift+B) and restart the simulation so it loads the new firmware.
 
 ## How it's meant to be used — learning with Claude Code
 The point isn't to have code written *for* you; it's to have a tutor that never
@@ -59,6 +80,22 @@ like:
 Because each project ships a `CLAUDE.md`, Claude already knows this is an avra /
 AVRASM2 / Wokwi project (not Arduino) and builds/wires things the right way. Use it
 to *understand* — then make sure the work you submit is genuinely your own.
+
+## Use it to learn, not to cheat
+Real talk: this makes it trivially easy to have Claude hand you a finished
+`main.asm` and move on. Please don't — that's renting an answer, not learning. The
+whole point of an assembly course is building a real mental model of how the CPU
+works, and that model only forms when *you* wrestle with the registers, the stack,
+and the timing. Skip it and the midterm — and every course stacked on top of this
+one — will find the gap.
+
+So flip it around: have Claude **explain before it writes**, predict what an
+instruction will do before you run it, and write the code yourself once it clicks.
+Let the blinking LED be the payoff for understanding, not a substitute for it.
+
+And the practical part: check your course's and instructor's policy on AI help — it
+varies, and what you submit is your responsibility. Used this way it's a tutor
+that's awake at 2 a.m.; used to cheat it's just an expensive way to bomb the exam.
 
 ## What bootstrap does
 1. Ensures the `avra` binary exists (uses the committed one; builds from the
@@ -82,16 +119,6 @@ windows/                    avra.exe, New-AvrProject.ps1, build.ps1 overlay,
 macos/                      avra (arm64), *.sh scripts, build_avra.sh (clang)
 bootstrap.ps1 / bootstrap.sh
 ```
-
-## Prerequisites (not auto-installed)
-- **VS Code + the Wokwi extension** — the simulator.
-- **Git** — to clone.
-- **Claude Code** — the AI tutor/pair-programmer (optional but the whole point).
-- **Python 3** (optional) — only for the `wokwi-diagram` skill's helper
-  (`py -3` on Windows, `python3` on macOS).
-- **macOS only, and only as a fallback:** Xcode Command Line Tools. Apple-Silicon
-  clones use the committed `macos/avra/avra` (arm64) as-is — no compiler needed. You
-  only need Xcode CLT on an Intel Mac, or to rebuild the binary yourself.
 
 ## Rebuilding avra
 Prebuilt binaries are committed for instant restore, but the source

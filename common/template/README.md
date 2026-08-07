@@ -10,14 +10,28 @@ Studio dialect), assembled with [`avra`] and emulated in **Wokwi**.
 Output: `build/firmware.hex`.
 
 ## Run in Wokwi
-1. Install the **Wokwi Simulator** extension in VS Code (one-time) — the simulation
-   won't run without it.
-2. **Build** first: **Ctrl+Shift+B** (creates `build/firmware.hex`).
-3. **Open `diagram.json`** — that file *is* the Wokwi simulation (the virtual
+1. Install the **Wokwi Simulator** extension in VS Code (one-time).
+2. **Get a free license:** F1 → **`Wokwi: Request a new License`** (free for personal
+   use; re-run it when the key lapses).
+3. **Build** first: **Ctrl+Shift+B** (creates `build/firmware.hex`).
+4. **Open `diagram.json`** — that file *is* the Wokwi simulation (the virtual
    Arduino + wiring). Opening it launches the simulator; press the green **play**
    button to start. The LED should blink.
 
 Rebuild (Ctrl+Shift+B) and restart the simulation after each change to your assembly.
+The simulator needs an internet connection (offline mode:
+https://docs.wokwi.com/vscode/offline-mode).
+
+## Changing the circuit
+Three ways, only the first needs Claude Code:
+- **Claude Code** — ask it; the `wokwi-diagram` skill edits `diagram.json` with correct
+  pin names for the ELEGOO UNO R3 kit parts.
+- **Free web editor** — build it at https://wokwi.com, then copy its `diagram.json` here.
+- **Hand-edit `diagram.json`** — plain JSON; see the skill's `references/parts.md` for pin
+  names.
+
+The three above are free. If you buy a **paid Wokwi license**, the graphical diagram editor
+inside VS Code is unlocked too — same thing, just in-editor.
 
 ## Files
 ```

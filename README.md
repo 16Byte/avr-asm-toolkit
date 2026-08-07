@@ -10,6 +10,9 @@ macOS (Apple Silicon included).
 It's also wired for **Claude Code**: every project it generates carries a
 `CLAUDE.md`, and it installs a small skill for editing the circuit — so you can ask
 Claude to help you build an assignment *and explain it as you go* (more below).
+Everything — bootstrapping, assembling, simulating, and editing circuits — works
+**without** Claude Code; it's an optional AI tutor layered on a plain avra + Wokwi
+setup, not the product itself.
 
 > **Heads up:** this is an unofficial, student-made convenience tool — **not**
 > affiliated with or endorsed by any university, course, instructor, or textbook.
@@ -40,7 +43,8 @@ bash macos/new-avr-project.sh Lab1 --open
 > run `xcode-select --install`, then `bash bootstrap.sh` again to build it from source.
 
 ## Prerequisites (not auto-installed)
-- **VS Code + the Wokwi extension** — the simulator.
+- **VS Code + the Wokwi Simulator extension**, plus a **free Wokwi license key** — the
+  simulator (getting the key is a step in "See the blink" below).
 - **Git** — to clone.
 - **Claude Code** — the AI tutor/pair-programmer (optional).
 - **Python 3** (optional) — only for the `wokwi-diagram` skill's helper
@@ -53,15 +57,47 @@ bash macos/new-avr-project.sh Lab1 --open
 The generated project ships with a ready-made circuit in `diagram.json` (an LED on
 pin 13). To run it:
 
-1. **Install the Wokwi extension** in VS Code — open the Extensions panel and search
-   for **"Wokwi Simulator"**. One-time, and the simulation won't run without it.
-2. **Build the firmware:** press **Ctrl+Shift+B** (produces `build/firmware.hex`).
-3. **Open `diagram.json`** — that file *is* the Wokwi simulation (the virtual
+1. **Install the Wokwi Simulator extension** in VS Code — open the Extensions panel and
+   search for **"Wokwi Simulator"**.
+2. **Get a free license:** press **F1** and run **`Wokwi: Request a new License`**. It's
+   free for personal and open-source use. The free key is time-limited, so when it lapses
+   just run the same command again — a roughly monthly button press, not a paywall.
+3. **Build the firmware:** press **Ctrl+Shift+B** (produces `build/firmware.hex`).
+4. **Open `diagram.json`** — that file *is* the Wokwi simulation (the virtual
    Arduino Uno + its wiring). Opening it launches the simulator view; press the
    green **play** button to start.
 
 The on-board LED starts blinking. After any change to your assembly, rebuild
 (Ctrl+Shift+B) and restart the simulation so it loads the new firmware.
+
+> The Wokwi simulator runs on Wokwi's servers, so it needs an internet connection. An
+> offline mode exists — see [docs.wokwi.com/vscode/offline-mode](https://docs.wokwi.com/vscode/offline-mode).
+
+## Editing the circuit
+The starter circuit is a single LED on pin 13. There are three ways to change it — pick
+whichever fits, and **only the first needs Claude Code:**
+
+1. **With Claude Code (fastest).** Describe the change in plain English — *"add a push
+   button on pin 2 with a pull-up"* — and the bundled **`wokwi-diagram`** skill edits
+   `diagram.json` with the correct part types and pin names. The skill knows the whole
+   **ELEGOO UNO R3 kit**: LEDs, buttons, LCD1602, 1- and 4-digit 7-segment, potentiometer,
+   joystick, HC-SR04 ultrasonic, DHT sensor, servo, relay, 74HC595, photoresistor,
+   thermistor, and more (see
+   [`common/skill/wokwi-diagram/references/parts.md`](common/skill/wokwi-diagram/references/parts.md)).
+2. **Without Claude Code — the free web editor.** Build the circuit visually at
+   [wokwi.com](https://wokwi.com), then copy its `diagram.json` into your project. (The
+   VS Code *graphical* diagram editor is a paid feature —
+   [wokwi/wokwi-features#816](https://github.com/wokwi/wokwi-features/issues/816) — so the
+   web editor is the free way to edit visually.)
+3. **Hand-edit `diagram.json`.** It's plain JSON (a list of parts + connections); use the
+   pin and part names in the skill's
+   [`parts.md`](common/skill/wokwi-diagram/references/parts.md) so you're not guessing.
+
+Prefer to edit graphically inside VS Code? A **paid Wokwi license** unlocks the built-in
+diagram editor there — same result as the web editor, just in-editor instead of the browser.
+
+Tiers 2 and 3 need no Claude Code, so you can build any circuit the course throws at you
+with just VS Code + Wokwi (free).
 
 ## How it's meant to be used — learning with Claude Code
 The point isn't to have code written *for* you; it's to have a tutor that never

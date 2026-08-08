@@ -42,7 +42,8 @@ EOF
 
 echo "Installing arduino:avr core (one-time download)..."
 "$CLI" --config-file "$CFG" core update-index
-"$CLI" --config-file "$CFG" core install arduino:avr
+# Pin the core version so the IntelliSense paths in template/.vscode stay valid.
+"$CLI" --config-file "$CFG" core install arduino:avr@1.8.8
 
 # persist AVR_TOOLKIT_HOME
 ZP="$HOME/.zprofile"

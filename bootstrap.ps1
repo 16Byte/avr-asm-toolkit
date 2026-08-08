@@ -46,7 +46,8 @@ if (-not (Test-Path $Cli)) {
 # 3) arduino:avr core ---------------------------------------------------------
 Write-Host "Installing arduino:avr core (one-time download)..." -ForegroundColor Cyan
 & $Cli --config-file $Cfg core update-index
-& $Cli --config-file $Cfg core install arduino:avr
+# Pin the core version so the IntelliSense paths in template/.vscode stay valid.
+& $Cli --config-file $Cfg core install arduino:avr@1.8.8
 if ($LASTEXITCODE -ne 0) { throw "arduino:avr core install failed (need internet)." }
 
 # 4) persist AVR_TOOLKIT_HOME so build scripts find the toolchain -------------

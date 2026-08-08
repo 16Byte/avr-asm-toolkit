@@ -1,0 +1,37 @@
+{
+  "//": "Gives the C/C++ extension the same includes/defines arduino-cli uses, so the",
+  "//2": "Arduino .ino stops showing bogus 'undefined identifier' squiggles. The BUILD",
+  "//3": "(Ctrl+Shift+B via arduino-cli) is the source of truth regardless of this file.",
+  "//4": "Paths follow the toolkit's default install location + pinned arduino:avr@1.8.8.",
+  "version": 4,
+  "configurations": [
+    {
+      "name": "Win32",
+      "compilerPath": "${env:LOCALAPPDATA}/avr-asm-toolkit/adata/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-g++.exe",
+      "compilerArgs": ["-mmcu=atmega328p"],
+      "forcedInclude": ["${env:LOCALAPPDATA}/avr-asm-toolkit/adata/packages/arduino/hardware/avr/1.8.8/cores/arduino/Arduino.h"],
+      "includePath": [
+        "${workspaceFolder}",
+        "${env:LOCALAPPDATA}/avr-asm-toolkit/adata/packages/arduino/hardware/avr/1.8.8/cores/arduino",
+        "${env:LOCALAPPDATA}/avr-asm-toolkit/adata/packages/arduino/hardware/avr/1.8.8/variants/standard"
+      ],
+      "defines": ["F_CPU=16000000L", "ARDUINO=10607", "ARDUINO_AVR_UNO", "ARDUINO_ARCH_AVR", "__AVR_ATmega328P__"],
+      "cStandard": "gnu11",
+      "cppStandard": "gnu++11"
+    },
+    {
+      "name": "Mac",
+      "compilerPath": "${env:HOME}/.local/share/avr-asm-toolkit/adata/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-g++",
+      "compilerArgs": ["-mmcu=atmega328p"],
+      "forcedInclude": ["${env:HOME}/.local/share/avr-asm-toolkit/adata/packages/arduino/hardware/avr/1.8.8/cores/arduino/Arduino.h"],
+      "includePath": [
+        "${workspaceFolder}",
+        "${env:HOME}/.local/share/avr-asm-toolkit/adata/packages/arduino/hardware/avr/1.8.8/cores/arduino",
+        "${env:HOME}/.local/share/avr-asm-toolkit/adata/packages/arduino/hardware/avr/1.8.8/variants/standard"
+      ],
+      "defines": ["F_CPU=16000000L", "ARDUINO=10607", "ARDUINO_AVR_UNO", "ARDUINO_ARCH_AVR", "__AVR_ATmega328P__"],
+      "cStandard": "gnu11",
+      "cppStandard": "gnu++11"
+    }
+  ]
+}

@@ -5,6 +5,25 @@ GNU / avr-gcc syntax), compiled with **arduino-cli** and simulated in **Wokwi**.
 matches the course labs (an `.ino` plus a `.S`, e.g. `Lab5.ino` + `push_button.S`).
 It is **not** AVRASM2/Microchip-Studio syntax, and **not** a PlatformIO project.
 
+## Do the work in assembly — this is the point of the course
+When asked to implement behavior (blink, read a button, drive a display, count,
+debounce, …), put the actual logic in a **`.S` file** using AVR instructions
+(`sbi`/`cbi`/`sbis`/`sbic`, branches, loops) and keep the **`.ino` as minimal glue** —
+`setup()`/`loop()` that call `extern "C"` routines defined in the `.S`.
+
+- Do **NOT** implement the task in C++ inside the `.ino`.
+- Do **NOT** reach for Arduino libraries (LiquidCrystal, Servo, Wire, …) to do the
+  work — that skips the exercise the course is grading.
+- If something is genuinely impractical in pure assembly (e.g. a full LCD driver),
+  **say so and propose the assembly approach** (or the minimal glue the lab expects)
+  rather than silently writing it in C++.
+- **Exception:** when a lab provides a skeleton `.ino` that already uses specific
+  library/framework calls, follow the lab's structure and do the ToDo parts in the
+  `.S` exactly as the lab directs.
+
+When in doubt, ask which parts should be assembly vs. glue — don't default to the
+easy C++ path.
+
 ## Build
 Run the build script (**Ctrl+Shift+B**): `.\build.ps1` (Windows) / `./build.sh` (macOS).
 It runs `arduino-cli compile --fqbn arduino:avr:uno` and normalizes the output to

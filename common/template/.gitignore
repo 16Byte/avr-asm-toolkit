@@ -1,6 +1,2 @@
-# avra build output
+# arduino-cli build output
 build/
-
-# defensive: avra's EEPROM/object files if a build ever writes them beside source
-*.eep.hex
-*.obj

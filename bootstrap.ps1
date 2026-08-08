@@ -1,45 +1,58 @@
 <#
-  bootstrap.ps1 - set up the AVR-assembly toolkit on a Windows machine.
+  bootstrap.ps1 - set up the AVR (Arduino .ino + .S) toolkit on Windows.
 
-  What it does:
-    1. Ensures avra.exe exists (uses the committed binary; builds from source only
-       if missing and Visual Studio C++ tools are available).
-    2. Assembles a runtime folder (.runtime\avra = avra.exe + device includes) and
-       persists AVRA_HOME to it for your user, so build scripts work anywhere.
-    3. Installs the wokwi-diagram skill into ~/.claude/skills.
-    4. Smoke-tests a build of the template blink.
+  1. Download arduino-cli into a SHORT runtime path. (The AVR gcc toolchain fails
+     with "device-specs" errors under very deep paths, so we keep it shallow under
+     %LOCALAPPDATA%.)
+  2. Install the arduino:avr core (avr-gcc + Uno core) into a contained data dir,
+     so it never clobbers a system Arduino IDE setup.
+  3. Install the wokwi-diagram skill into ~/.claude/skills.
+  4. Start the Wokwi license clock.
+  5. Smoke-test: compile the template sketch.
 
-  Options:
-    -Link       install the skill as a junction (repo edits reflect live) instead of a copy
-    -AddAlias   add a `New-AvrProject` alias to your PowerShell $PROFILE
-
-  Prereqs not installed here: VS Code + the Wokwi extension (for emulation), Git,
-  and optionally a real Python 3 (only for the wokwi-diagram skill's helper).
+  Needs internet on first run (arduino-cli + core download).
+  Options: -Link (skill as a junction) -AddAlias (New-AvrProject alias in $PROFILE).
 #>
 param([switch]$Link, [switch]$AddAlias)
 $ErrorActionPreference = "Stop"
 $Repo = $PSScriptRoot
 Write-Host "AVR toolkit repo: $Repo" -ForegroundColor Cyan
 
-# 1) avra binary --------------------------------------------------------------
-$AvraExe = Join-Path $Repo "windows\avra\avra.exe"
-if (-not (Test-Path $AvraExe)) {
-    Write-Host "avra.exe missing - building from source (needs Visual Studio C++)..." -ForegroundColor Yellow
-    & (Join-Path $Repo "windows\build-avra\build_avra.bat")
-    if (-not (Test-Path $AvraExe)) { throw "Could not obtain avra.exe." }
+# 1) runtime dirs (SHORT path) -----------------------------------------------
+$Runtime = Join-Path $env:LOCALAPPDATA "avr-asm-toolkit"
+$AcliDir = Join-Path $Runtime "acli"
+$DataDir = Join-Path $Runtime "adata"
+New-Item -ItemType Directory -Force -Path $AcliDir, $DataDir | Out-Null
+$Cli = Join-Path $AcliDir "arduino-cli.exe"
+$Cfg = Join-Path $AcliDir "arduino-cli.yaml"
+
+# 2) arduino-cli binary -------------------------------------------------------
+if (-not (Test-Path $Cli)) {
+    Write-Host "Downloading arduino-cli..." -ForegroundColor Cyan
+    $zip = Join-Path $env:TEMP "arduino-cli-dl.zip"
+    Invoke-WebRequest -Uri "https://downloads.arduino.cc/arduino-cli/arduino-cli_latest_Windows_64bit.zip" -OutFile $zip -UseBasicParsing
+    Expand-Archive -Path $zip -DestinationPath $AcliDir -Force
+    Remove-Item $zip -Force
 }
 
-# 2) runtime folder + AVRA_HOME ----------------------------------------------
-# Standard per-user install path (NOT inside the repo) so the build scripts can
-# default to it without needing AVRA_HOME in the environment.
-$Runtime = Join-Path $env:LOCALAPPDATA "avr-asm-toolkit\avra"
-$IncDst  = Join-Path $Runtime "includes"
-New-Item -ItemType Directory -Force -Path $IncDst | Out-Null
-Copy-Item $AvraExe (Join-Path $Runtime "avra.exe") -Force
-Copy-Item (Join-Path $Repo "common\avra\includes\*") $IncDst -Recurse -Force
-[Environment]::SetEnvironmentVariable("AVRA_HOME", $Runtime, "User")
-$env:AVRA_HOME = $Runtime
-Write-Host "AVRA_HOME = $Runtime  (persisted for your user)" -ForegroundColor Green
+# contained config: keep cores/toolchain under our own data dir
+@(
+    "directories:",
+    "  data: '$DataDir'",
+    "  downloads: '$(Join-Path $DataDir 'staging')'",
+    "  user: '$(Join-Path $DataDir 'user')'"
+) | Set-Content -Path $Cfg -Encoding UTF8
+
+# 3) arduino:avr core ---------------------------------------------------------
+Write-Host "Installing arduino:avr core (one-time download)..." -ForegroundColor Cyan
+& $Cli --config-file $Cfg core update-index
+& $Cli --config-file $Cfg core install arduino:avr
+if ($LASTEXITCODE -ne 0) { throw "arduino:avr core install failed (need internet)." }
+
+# 4) persist AVR_TOOLKIT_HOME so build scripts find the toolchain -------------
+[Environment]::SetEnvironmentVariable("AVR_TOOLKIT_HOME", $Runtime, "User")
+$env:AVR_TOOLKIT_HOME = $Runtime
+Write-Host "AVR_TOOLKIT_HOME = $Runtime  (persisted for your user)" -ForegroundColor Green
 
 # start the Wokwi license clock at first setup (don't clobber an existing stamp)
 $Stamp = Join-Path $Runtime "wokwi-license-stamp"
@@ -54,7 +67,7 @@ if (-not (Test-Path $Stamp)) {
     Write-Host "License stamp started ($today)." -ForegroundColor Green
 }
 
-# 3) install the wokwi-diagram skill -----------------------------------------
+# 5) install the wokwi-diagram skill -----------------------------------------
 $SkillSrc  = Join-Path $Repo "common\skill\wokwi-diagram"
 $SkillsDir = Join-Path $env:USERPROFILE ".claude\skills"
 $SkillDst  = Join-Path $SkillsDir "wokwi-diagram"
@@ -69,7 +82,7 @@ if ($Link) {
     Write-Host "Skill copied -> $SkillDst" -ForegroundColor Green
 }
 
-# 4) optional alias -----------------------------------------------------------
+# 6) optional alias -----------------------------------------------------------
 if ($AddAlias) {
     if (-not (Test-Path $PROFILE)) { New-Item -ItemType File -Force -Path $PROFILE | Out-Null }
     if (-not (Select-String -Path $PROFILE -SimpleMatch "New-AvrProject.ps1" -Quiet)) {
@@ -78,16 +91,15 @@ if ($AddAlias) {
     }
 }
 
-# 5) smoke test ---------------------------------------------------------------
-$tmp = Join-Path $env:TEMP ("avra-smoke-" + [guid]::NewGuid().ToString("N"))
+# 7) smoke test: compile the template sketch ---------------------------------
+$tmp = Join-Path $env:TEMP ("avrtk-smoke-" + [guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Force -Path $tmp | Out-Null
-# -e/-d keep avra's EEPROM+obj outputs in $tmp instead of next to the source.
-& (Join-Path $Runtime "avra.exe") -I $IncDst -o (Join-Path $tmp "fw.hex") -e (Join-Path $tmp "fw.eep.hex") -d (Join-Path $tmp "fw.obj") (Join-Path $Repo "common\template\src\main.asm") | Out-Null
-$ok = ($LASTEXITCODE -eq 0) -and (Test-Path (Join-Path $tmp "fw.hex"))
+& $Cli --config-file $Cfg compile --fqbn arduino:avr:uno --output-dir $tmp (Join-Path $Repo "common\template") 2>&1 | Out-Null
+$ok = ($LASTEXITCODE -eq 0) -and (Get-ChildItem $tmp -Filter "*.ino.hex" -ErrorAction SilentlyContinue)
 Remove-Item $tmp -Recurse -Force
-if ($ok) { Write-Host "Smoke test OK - template blink assembled." -ForegroundColor Green }
+if ($ok) { Write-Host "Smoke test OK - template sketch compiled." -ForegroundColor Green }
 else     { Write-Host "Smoke test FAILED." -ForegroundColor Red; exit 1 }
 
 Write-Host ""
-Write-Host "Done. Open a NEW terminal (so AVRA_HOME is picked up), then:" -ForegroundColor Cyan
+Write-Host "Done. Open a NEW terminal (so AVR_TOOLKIT_HOME is set), then:" -ForegroundColor Cyan
 Write-Host "  .\windows\New-AvrProject.ps1 Lab1 -Open"

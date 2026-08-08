@@ -22,9 +22,8 @@ SOFTWARE.
 
 ---
 
-NOTE: The MIT license above covers only this project's own original files
-(bootstrap scripts, build scripts, project template, scaffolders, docs, and the
-wokwi-diagram Claude skill). It does NOT cover the bundled `avra` assembler
-(source and binaries) or the device-definition includes, which are licensed
-under the GNU GPL v2 by The AVRA Authors. See CREDITS.md and
-common/build-avra/avra-src/COPYING.
+NOTE: The MIT license above covers this project's own original files (bootstrap
+scripts, build scripts, project template, scaffolders, docs, and the wokwi-diagram
+Claude skill). It does NOT cover arduino-cli or the Arduino AVR toolchain, which are
+downloaded at setup — not bundled in this repo — and carry their own licenses.
+See CREDITS.md.

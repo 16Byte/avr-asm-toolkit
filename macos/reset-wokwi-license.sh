@@ -5,10 +5,10 @@
 # restarts its ~30-day countdown. Run right after renewing in VS Code
 # (F1 -> "Wokwi: Request a new License").
 #
-# Finds the stamp via AVRA_HOME, defaulting to the standard install path.
+# Finds the stamp via AVR_TOOLKIT_HOME, defaulting to the standard install path.
 set -euo pipefail
-: "${AVRA_HOME:=$HOME/.local/share/avr-asm-toolkit/avra}"
-STAMP="$AVRA_HOME/wokwi-license-stamp"
+: "${AVR_TOOLKIT_HOME:=$HOME/.local/share/avr-asm-toolkit}"
+STAMP="$AVR_TOOLKIT_HOME/wokwi-license-stamp"
 TODAY="$(date +%Y-%m-%d)"
 {
   echo "# avr-asm-toolkit wokwi license stamp"

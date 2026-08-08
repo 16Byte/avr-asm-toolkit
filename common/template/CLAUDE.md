@@ -1,35 +1,35 @@
-# AVR assembly project (ATmega328P) — notes for Claude
+# AVR project (ATmega328P) — Arduino `.ino` + `.S` — notes for Claude
 
-Bare-metal AVR **assembly** in **AVRASM2 syntax** (Mazidi textbook / Microchip
-Studio dialect), assembled with `avra` and emulated in **Wokwi**.
-This is **not** an Arduino or PlatformIO project — don't add a framework or
-`platformio.ini`, and don't build with avr-gcc/`.S` GNU syntax.
+This is an **Arduino sketch** that does its real work in **AVR assembly** (`.S` files,
+GNU / avr-gcc syntax), compiled with **arduino-cli** and simulated in **Wokwi**. This
+matches the course labs (an `.ino` plus a `.S`, e.g. `Lab5.ino` + `push_button.S`).
+It is **not** AVRASM2/Microchip-Studio syntax, and **not** a PlatformIO project.
 
 ## Build
-Run the build script from the project root: **`./build.sh`** on macOS or
-**`.\build.ps1`** on Windows (also bound to **Ctrl+Shift+B**). It assembles
-`src/main.asm` → `build/firmware.hex`.
-
-The script already knows where `avra` is — the standard per-user path the toolkit's
-bootstrap installed it to — so just run it. **Do NOT search the filesystem for the
-`avra` binary** (no `find`, no scanning home folders — on macOS that triggers a
-cascade of scary permission prompts). If the script says avra is missing, the
-toolkit bootstrap simply hasn't been run on this machine yet; run that once instead.
-The PRAGMA/AVRPART notes avra prints while assembling are harmless.
+Run the build script (**Ctrl+Shift+B**): `.\build.ps1` (Windows) / `./build.sh` (macOS).
+It runs `arduino-cli compile --fqbn arduino:avr:uno` and normalizes the output to
+`build/firmware.hex` + `build/firmware.elf`. arduino-cli is located via `AVR_TOOLKIT_HOME`
+(set by the toolkit bootstrap); the script defaults to the standard install path, so just
+run it. **Do NOT search the filesystem** for arduino-cli or a compiler — if the script says
+it's missing, the toolkit bootstrap hasn't been run on this machine yet; run that instead.
 
 ## Run
-Wokwi loads `build/firmware.hex` (see `wokwi.toml`) together with `diagram.json`.
-avra emits HEX only (no ELF), so there's no source-level debug — the sim itself
-works fully.
+Open `diagram.json` to launch Wokwi (needs the Wokwi VS Code extension + a free license).
+`wokwi.toml` points at `build/firmware.hex` (+ `.elf`, so source-level debug works).
+
+## Assembly conventions (avr-gcc / GNU `.S`)
+- Assembly lives in `.S` files (capital S → the C preprocessor runs, so
+  `#include <avr/io.h>` works). Use `_SFR_IO_ADDR(PORTB)` etc. for `in`/`out`/`sbi`/`cbi`.
+- Expose routines with `.global name` … `name:` … `ret`, and call them from the `.ino`
+  as `extern "C" void name(void);` (avr-gcc calling convention).
+- The `.ino` uses the Arduino framework (`setup`/`loop`, `delay`, and `DDRB`/`PORTB`
+  from `<avr/io.h>`). Practice the labs' instructions in the `.S`: `sbi`, `cbi`, `sbis`, `sbic`.
 
 ## Editing the circuit (diagram.json)
-Use the **`wokwi-diagram`** skill. Run its Python helper with a real Python 3
-(`py -3` on Windows, `python3` on macOS) — avoid the bare `python` on Windows,
-which is often the Microsoft Store stub and fails. Always `validate` after edits,
-and keep the wiring in sync with the pins the assembly uses.
+Use the **`wokwi-diagram`** skill. Run its Python helper with `py -3` (Windows) / `python3`
+(macOS) — not the bare `python` on Windows. Always `validate` after edits; keep the wiring
+in sync with the pins the code uses.
 
-## Assembly conventions
-- Program starts at `RESET`; set up the stack (`SP = RAMEND`) first — no C runtime.
-- Default example: LED on PB5 (Arduino D13). If you move a pin in code, update
-  `diagram.json` to match (and vice-versa).
-- New multi-file programs: keep `src/main.asm` as the entry and `.include` others.
+## For a lab
+Replace `<Name>.ino` + `blink.S` with the lab's provided files (keep the `.ino` named to
+match the folder). Submit the `.ino` + `.S` the lab asks for.

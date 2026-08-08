@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
-# new-avr-project.sh - scaffold a ready-to-code AVR assembly + Wokwi project (macOS).
+# new-avr-project.sh - scaffold a ready-to-code Arduino (.ino + .S) + Wokwi project (macOS).
 #
-# Composes a project from the shared template (common/template) plus the macOS
-# overlay (build.sh + .vscode task).
+# A project is an Arduino sketch folder: <Name>/<Name>.ino plus assembly in .S files.
+# Composes the shared template + the macOS overlay, and renames the starter .ino to
+# match the folder (Arduino requires the main sketch file to share the folder's name).
+#
+# For a lab: scaffold with the lab's name, then replace the starter .ino/.S with the
+# lab's provided files (e.g. Lab5.ino + push_button.S).
 #
 # Usage:
-#   ./macos/new-avr-project.sh Lab1
-#   ./macos/new-avr-project.sh Lab2 --open
+#   ./macos/new-avr-project.sh Lab5
+#   ./macos/new-avr-project.sh Lab5 --open
 #   ./macos/new-avr-project.sh Homework3 ~/school
 set -euo pipefail
 
@@ -18,7 +22,7 @@ for a in "$@"; do
   esac
 done
 if [ -z "$NAME" ]; then echo "usage: new-avr-project.sh <name> [dest-parent] [--open]" >&2; exit 1; fi
-DEST_PARENT="${DEST_PARENT:-$HOME/Documents/PlatformIO/Projects}"
+DEST_PARENT="${DEST_PARENT:-$HOME/Documents/Arduino}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -31,10 +35,11 @@ done
 DEST="$DEST_PARENT/$NAME"
 [ -e "$DEST" ] && { echo "destination already exists: $DEST" >&2; exit 1; }
 mkdir -p "$DEST"
-cp -R "$COMMON/." "$DEST/"     # shared: src/main.asm, wokwi.toml, diagram.json, CLAUDE.md, README, .gitignore
-cp -R "$OVERLAY/." "$DEST/"    # macOS: build.sh, .vscode/tasks.json
+cp -R "$COMMON/." "$DEST/"
+cp -R "$OVERLAY/." "$DEST/"
+[ -f "$DEST/template.ino" ] && mv "$DEST/template.ino" "$DEST/$NAME.ino"
 chmod +x "$DEST/build.sh" 2>/dev/null || true
 
-echo "Created AVR asm project -> $DEST"
-echo "Next: 1) code \"$DEST\"   2) Ctrl+Shift+B   3) 'Wokwi: Start Simulator'"
+echo "Created Arduino+asm project -> $DEST"
+echo "Next: 1) code \"$DEST\"   2) Ctrl+Shift+B   3) open diagram.json (Wokwi)"
 if [ "$OPEN" = 1 ] && command -v code >/dev/null 2>&1; then code "$DEST"; fi

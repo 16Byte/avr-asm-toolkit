@@ -1,56 +1,49 @@
 #!/usr/bin/env bash
-# build.sh - assemble an AVRASM2 project with avra into an Intel HEX for Wokwi.
+# build.sh - compile this Arduino sketch (.ino + any .S files) with arduino-cli
+# into build/firmware.hex (+ .elf) for Wokwi.
 #
-# Usage:
-#   ./build.sh                    # assembles src/main.asm -> build/firmware.hex
-#   ./build.sh src/lab2.asm       # different entry file
-#   ./build.sh --clean            # remove build/ first
+# arduino-cli is located via AVR_TOOLKIT_HOME (set by bootstrap.sh); it defaults to
+# the standard install path if the var isn't set, so the build works even in a bare
+# shell (e.g. when Claude runs it) without searching the filesystem.
 #
-# avra is located via AVRA_HOME (set once per machine by the toolkit bootstrap.sh).
+# Usage: ./build.sh          # compile this sketch
+#        ./build.sh --clean  # remove build/ first
 set -euo pipefail
 
 CLEAN=0
-if [ "${1:-}" = "--clean" ]; then CLEAN=1; shift; fi
-SRC="${1:-src/main.asm}"
-OUT="${2:-build/firmware.hex}"
+[ "${1:-}" = "--clean" ] && CLEAN=1
 
-# Find avra: honor $AVRA_HOME if set, else fall back to the standard per-user
-# install path the bootstrap uses. This makes the build work even when the calling
-# shell never sourced your profile (e.g. an AI assistant running it in a bare,
-# non-login shell) -- so nothing ever needs to go hunting across the filesystem.
-: "${AVRA_HOME:=$HOME/.local/share/avr-asm-toolkit/avra}"
-AVRA="$AVRA_HOME/avra"
-INC="$AVRA_HOME/includes"
-if [ ! -x "$AVRA" ]; then
-  echo "ERROR: avra not found at $AVRA" >&2
-  echo "Run the toolkit's bootstrap.sh once to install it. Do NOT search the filesystem." >&2
+HOME2="${AVR_TOOLKIT_HOME:-$HOME/.local/share/avr-asm-toolkit}"
+CLI="$HOME2/acli/arduino-cli"
+CFG="$HOME2/acli/arduino-cli.yaml"
+if [ ! -x "$CLI" ]; then
+  echo "ERROR: arduino-cli not found at $CLI" >&2
+  echo "Run the toolkit's bootstrap.sh once. Do NOT search the filesystem." >&2
   exit 1
 fi
-[ -f "$SRC" ]  || { echo "ERROR: source file not found: $SRC" >&2; exit 1; }
 
-OUTDIR="$(dirname "$OUT")"
-[ "$CLEAN" = 1 ] && [ -n "$OUTDIR" ] && rm -rf "$OUTDIR"
-mkdir -p "$OUTDIR"
+[ "$CLEAN" = 1 ] && rm -rf build
+mkdir -p build
 
-# avra always emits an EEPROM (.eep.hex) and a debug object (.obj), by default
-# next to the SOURCE. Redirect both into the build dir with -e/-d so src/ stays clean.
-OUTBASE="${OUT%.*}"
-echo "avra: $SRC -> $OUT"
-"$AVRA" -I "$INC" -o "$OUT" -e "$OUTBASE.eep.hex" -d "$OUTBASE.obj" "$SRC"
-echo "Build OK -> $OUT"
+echo "arduino-cli compile (arduino:avr:uno)..."
+"$CLI" --config-file "$CFG" compile --fqbn arduino:avr:uno --output-dir build .
+
+# normalize output to stable names so wokwi.toml never changes per project
+hex="$(ls build/*.ino.hex 2>/dev/null | grep -v with_bootloader | head -1 || true)"
+elf="$(ls build/*.ino.elf 2>/dev/null | head -1 || true)"
+[ -n "$hex" ] && cp "$hex" build/firmware.hex
+[ -n "$elf" ] && cp "$elf" build/firmware.elf
+echo "Build OK -> build/firmware.hex"
 
 # --- Wokwi license reminder (non-blocking, estimate only) --------------------
-# Free Wokwi keys last ~30 days. We can't read the real expiry (it's in VS Code's
-# encrypted secret store), so we estimate from a date stamp written at bootstrap
-# and refreshed by reset-wokwi-license.sh. This must never affect the build.
 if [ "${AVR_TOOLKIT_NO_LICENSE_WARN:-}" != "1" ]; then
-  stamp="$AVRA_HOME/wokwi-license-stamp"
+  stamp="$HOME2/wokwi-license-stamp"
   if [ -f "$stamp" ]; then
     val="$(grep -E '^[[:space:]]*activated[[:space:]]*=' "$stamp" 2>/dev/null | head -1 | cut -d= -f2 | tr -d '[:space:]' || true)"
     act="$(date -j -f "%Y-%m-%d" "$val" "+%s" 2>/dev/null || true)"
     if [ -n "$act" ]; then
       days=$(( ( $(date "+%s") - act ) / 86400 ))
-      if [ "$days" -ge 24 ]; then   # 0-23 and future (negative) stay silent
+      if [ "$days" -ge 24 ]; then
         if [ "$days" -ge 30 ]; then
           echo "[wokwi] Your Wokwi license was set ~$days days ago and has probably expired (free keys last ~30)."
         else

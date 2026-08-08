@@ -11,21 +11,20 @@ The bootstrap scripts, project template, build scripts, scaffolders, docs, and t
 `wokwi-diagram` Claude skill are © 2026 Diego Jimenez and MIT-licensed (see
 [LICENSE](LICENSE)).
 
-## Bundled third-party software
-- **avra** — the AVR macro assembler that does the actual work. Copyright ©
-  1998–2020 The AVRA Authors, licensed under the **GNU General Public License,
-  version 2**. Source is vendored at `common/build-avra/avra-src/` (full license in
-  its `COPYING`); prebuilt binaries are in `windows/avra/` and `macos/avra/`.
-  Upstream: https://github.com/Ro5bert/avra
-- **Device definitions** (`common/avra/includes/*.inc`) are distributed with avra
-  and carry avra's licensing.
+## Toolchain — downloaded, not bundled
+- **arduino-cli** (Apache-2.0) is downloaded by bootstrap into a per-user runtime
+  directory; it is not committed in this repo. Upstream: https://github.com/arduino/arduino-cli
+- The **Arduino AVR core** (`arduino:avr`, which includes avr-gcc) is installed by
+  arduino-cli on first bootstrap. It carries its own upstream licenses (the Arduino
+  core is LGPL/GPL, avr-gcc is GPL, avr-libc is BSD-style) and lives in the runtime,
+  not in this repo.
 
 ## Not bundled — you install these yourself
 - **Wokwi** — the hardware simulator, via the Wokwi VS Code extension (a
   third-party product with its own terms).
 - **Claude Code** — used as the AI pair-programmer and tutor.
-- The **Mazidi, Naimi & Naimi** textbook is referenced for AVRASM2 syntax only;
-  no textbook content is included here.
+- The **Mazidi, Naimi & Naimi** textbook is the course text; no textbook content is
+  included here.
 
 ## Using it responsibly
 This is meant to help you **learn** — to build things, then understand why they

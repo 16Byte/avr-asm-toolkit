@@ -5,12 +5,12 @@
   restarts its ~30-day countdown. Run this right after renewing in VS Code
   (F1 -> "Wokwi: Request a new License").
 
-  The stamp lives in the toolkit runtime; this finds it via AVRA_HOME, defaulting
-  to the standard install path if AVRA_HOME isn't set.
+  The stamp lives in the toolkit runtime; this finds it via AVR_TOOLKIT_HOME,
+  defaulting to the standard install path if that isn't set.
 #>
 $ErrorActionPreference = "Stop"
-$AvraHome = if ($env:AVRA_HOME) { $env:AVRA_HOME } else { Join-Path $env:LOCALAPPDATA "avr-asm-toolkit\avra" }
-$Stamp = Join-Path $AvraHome "wokwi-license-stamp"
+$Home2 = if ($env:AVR_TOOLKIT_HOME) { $env:AVR_TOOLKIT_HOME } else { Join-Path $env:LOCALAPPDATA "avr-asm-toolkit" }
+$Stamp = Join-Path $Home2 "wokwi-license-stamp"
 $today = Get-Date -Format 'yyyy-MM-dd'
 @(
     "# avr-asm-toolkit wokwi license stamp",

@@ -1,6 +1,6 @@
 [wokwi]
 version = 1
-# avra emits Intel HEX (no ELF), so we point Wokwi at the hex.
-# Source-level debugging needs an ELF and is not available with avra;
-# the simulation itself (LEDs, I/O, timing) works from the hex alone.
+# arduino-cli produces <sketch>.ino.hex/.elf; build.ps1/build.sh normalize those to
+# these stable names so this file stays the same across every project.
 firmware = 'build/firmware.hex'
+elf = 'build/firmware.elf'

@@ -1,9 +1,9 @@
 # avr-asm-toolkit — Arduino `.ino` + `.S` (lab-style)
 
-> **Branch note:** this is the **`world-b-arduino`** branch — the Arduino-sketch
-> variant that matches how the course *labs* are written (an Arduino `.ino` plus
-> GNU-syntax assembly in `.S` files, compiled with `arduino-cli`). The `main` branch
-> is the alternative "textbook" variant (standalone AVRASM2 assembled with `avra`).
+> **Branches:** this is **`arduino-cli`** (the default) — the Arduino-sketch variant
+> that matches how the course *labs* are written (an Arduino `.ino` plus GNU-syntax
+> assembly in `.S`, compiled with `arduino-cli`). An **`avra`** branch holds the
+> alternative "textbook" variant (standalone AVRASM2 assembled with `avra`).
 
 A portable, one-command setup for the CSCI 2230 / CSCI 4555 labs: write AVR
 **assembly in `.S` files** called from an **Arduino sketch**, compile with
@@ -28,7 +28,6 @@ optional AI tutor layered on a plain arduino-cli + Wokwi setup, not the product 
 ```powershell
 git clone https://github.com/16Byte/avr-asm-toolkit.git $env:USERPROFILE\avr-asm-toolkit
 cd $env:USERPROFILE\avr-asm-toolkit
-git checkout world-b-arduino
 .\bootstrap.ps1
 .\windows\New-AvrProject.ps1 Lab5 -Open
 ```
@@ -37,7 +36,6 @@ git checkout world-b-arduino
 ```bash
 git clone https://github.com/16Byte/avr-asm-toolkit.git ~/avr-asm-toolkit
 cd ~/avr-asm-toolkit
-git checkout world-b-arduino
 bash bootstrap.sh
 bash macos/new-avr-project.sh Lab5 --open
 ```
@@ -121,8 +119,15 @@ live check.
 1. Downloads `arduino-cli` into a short runtime dir under `%LOCALAPPDATA%` / `~/.local/share`.
 2. Installs the `arduino:avr` core (avr-gcc + Uno core) into a contained data dir.
 3. Persists **`AVR_TOOLKIT_HOME`** so the build scripts find the toolchain anywhere.
-4. Installs the **`wokwi-diagram`** skill into `~/.claude/skills` and starts the license clock.
+4. **Links** the **`wokwi-diagram`** skill into `~/.claude/skills` (so a later `git pull`
+   updates it — don't move or delete the clone, since it backs the link) and starts the
+   license clock.
 5. Smoke-tests a compile of the template sketch.
+
+## Updating
+`git pull` in this clone updates the whole toolkit — the linked skill, the project
+template, and the build scripts (new projects pick them up when scaffolded). Re-run
+`bootstrap` only when you want to refresh the toolchain itself.
 
 ## Repo map
 ```

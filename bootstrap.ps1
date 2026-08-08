@@ -11,9 +11,11 @@
   5. Smoke-test: compile the template sketch.
 
   Needs internet on first run (arduino-cli + core download).
-  Options: -Link (skill as a junction) -AddAlias (New-AvrProject alias in $PROFILE).
+  The skill is installed as a live junction by default, so a later `git pull` updates
+  it with no re-copy. Options: -Copy (independent copy instead of a junction),
+  -AddAlias (New-AvrProject alias in $PROFILE).
 #>
-param([switch]$Link, [switch]$AddAlias)
+param([switch]$Copy, [switch]$AddAlias)
 $ErrorActionPreference = "Stop"
 $Repo = $PSScriptRoot
 Write-Host "AVR toolkit repo: $Repo" -ForegroundColor Cyan
@@ -73,11 +75,14 @@ $SkillSrc  = Join-Path $Repo "common\skill\wokwi-diagram"
 $SkillsDir = Join-Path $env:USERPROFILE ".claude\skills"
 $SkillDst  = Join-Path $SkillsDir "wokwi-diagram"
 New-Item -ItemType Directory -Force -Path $SkillsDir | Out-Null
-if ($Link) {
+if (-not $Copy) {
+    # default: junction so `git pull` updates the skill live (rmdir on a junction
+    # removes only the link, never the repo files it points at)
     if (Test-Path $SkillDst) { cmd /c rmdir /S /Q "`"$SkillDst`"" | Out-Null }
     cmd /c mklink /J "`"$SkillDst`"" "`"$SkillSrc`"" | Out-Null
-    Write-Host "Skill junction -> $SkillDst" -ForegroundColor Green
+    Write-Host "Skill linked (junction) -> $SkillDst  (git pull keeps it current)" -ForegroundColor Green
 } else {
+    if (Test-Path $SkillDst) { cmd /c rmdir /S /Q "`"$SkillDst`"" | Out-Null }
     New-Item -ItemType Directory -Force -Path $SkillDst | Out-Null
     Copy-Item (Join-Path $SkillSrc "*") $SkillDst -Recurse -Force
     Write-Host "Skill copied -> $SkillDst" -ForegroundColor Green

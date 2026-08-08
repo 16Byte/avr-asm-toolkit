@@ -9,7 +9,8 @@
 # 5. Smoke-test: compile the template sketch.
 #
 # Needs internet on first run (arduino-cli + core download).
-# Option: --link  install the skill as a symlink (repo edits reflect live).
+# The skill is symlinked by default, so a later 'git pull' updates it with no re-copy.
+# Option: --copy  install an independent copy instead of a symlink.
 set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 echo "AVR toolkit repo: $REPO"
@@ -70,10 +71,11 @@ fi
 SKILL_SRC="$REPO/common/skill/wokwi-diagram"
 SKILL_DST="$HOME/.claude/skills/wokwi-diagram"
 mkdir -p "$HOME/.claude/skills"
-if [ "${1:-}" = "--link" ]; then
-  rm -rf "$SKILL_DST"; ln -s "$SKILL_SRC" "$SKILL_DST"; echo "Skill symlink -> $SKILL_DST"
+if [ "${1:-}" = "--copy" ]; then
+  rm -rf "$SKILL_DST"; mkdir -p "$SKILL_DST"; cp -R "$SKILL_SRC/." "$SKILL_DST/"; echo "Skill copied -> $SKILL_DST"
 else
-  mkdir -p "$SKILL_DST"; cp -R "$SKILL_SRC/." "$SKILL_DST/"; echo "Skill copied -> $SKILL_DST"
+  # default: symlink so 'git pull' updates the skill live
+  rm -rf "$SKILL_DST"; ln -s "$SKILL_SRC" "$SKILL_DST"; echo "Skill symlinked -> $SKILL_DST  (git pull keeps it current)"
 fi
 
 # smoke test: compile the template sketch

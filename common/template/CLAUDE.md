@@ -24,6 +24,12 @@ debounce, …), put the actual logic in a **`.S` file** using AVR instructions
 When in doubt, ask which parts should be assembly vs. glue — don't default to the
 easy C++ path.
 
+**Reusable driver:** for an **I2C LCD that immediately prints text**, don't re-derive
+the HD44780 init — reuse the known-good `references/lcd-i2c-hello.S` from the
+wokwi-diagram skill (installed at `~/.claude/skills/wokwi-diagram/references/`). Copy
+it in as `lcd.S`, call `lcd_hello()` from the `.ino`, wire the LCD in i2c mode
+(SDA→A4, SCL→A5), and edit the `.asciz` string for the message.
+
 ## Build
 Run the build script (**Ctrl+Shift+B**): `.\build.ps1` (Windows) / `./build.sh` (macOS).
 It runs `arduino-cli compile --fqbn arduino:avr:uno` and normalizes the output to

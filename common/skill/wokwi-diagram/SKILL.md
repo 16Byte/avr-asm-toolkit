@@ -78,3 +78,18 @@ patterns (LED+resistor, button pull-up/pull-down, analog sensor→ADC, 7-segment
 For things the script doesn't do (custom wire routes, bulk restructuring, exotic
 parts), edit the JSON directly using `references/schema.md`, then still run
 `validate` to catch mistakes.
+
+## Reference: I2C LCD that immediately prints text
+If the user wants an LCD1602 that shows a message at startup, **don't derive the
+HD44780 init from scratch** (it's fiddly and fails intermittently) — reuse the
+known-good, Wokwi-verified driver `references/lcd-i2c-hello.S` (pure AVR assembly,
+GNU/avr-gcc syntax). Steps:
+- Copy it into the sketch as `lcd.S`; add a 2-line `.ino` that calls `lcd_hello()`.
+- Wire a `wokwi-lcd1602` with `attrs.pins = "i2c"`: `SDA->uno:A4`, `SCL->uno:A5`,
+  `VCC->5V`, `GND->GND`.
+- Change the text via the `.asciz` string; for a different backpack address set
+  `SLA_W = addr << 1` (0x27 -> 0x4E).
+
+This is the **I2C-backpack** LCD (4 wires). The parallel 16-pin LCD1602 that some
+kits ship needs a different driver (RS/E/D4–D7 on GPIO) — offer that variant if the
+user is on real hardware rather than Wokwi.

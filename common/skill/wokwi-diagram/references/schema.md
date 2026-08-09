@@ -40,6 +40,26 @@ Each connection is a 4-element array:
   (down 12px), `"h-8"` (left 8px). **An empty list `[]` is fine** — Wokwi draws a
   direct wire. Don't hand-craft routes; leave `[]` unless the user wants tidy paths.
 
+### Plugging components into the board (legibility, and how the real kit works)
+On a real solderless breadboard a component's **legs plug straight into holes** — you
+don't run a cable from the part. Wokwi models this with a special connection: **empty
+color + route `["$bb"]`**, e.g. `[ "led1:A", "bb1:26t.e", "", [ "$bb" ] ]`. That renders
+the leg seated in the hole instead of a wire. (Confirmed from a real diagram.)
+- **Prefer plugging over cabling** for components (LED, resistor, button, sensor legs):
+  it's what the lab hardware does and it's far more legible than wires crossing the board.
+  Script: `connect COMP:PIN bb1:HOLE --plug`. Use plain `connect` (a colored cable) only
+  for **jumpers** — hole↔hole or Uno↔hole.
+- The connection is still explicit (Wokwi doesn't auto-wire by proximity); place the
+  component near its holes so the seated leg reads right.
+
+### One pin per hole (a hole holds ONE leg/wire)
+A physical breadboard hole fits exactly one pin. Wokwi will happily stack several
+endpoints on the same hole, but the real ELEGOO board can't. **Never put two endpoints
+on the identical hole.** To join a node where a leg already sits (say the LED anode in
+`26t.e`), tap a **different hole in the same column** — same number, same `t`/`b` block,
+a different row (`26t.d`); the five holes of that column are one node. `validate` warns
+on any doubled hole.
+
 ## Coordinates & layout (no graphical editor needed)
 - Think of the board at origin. Put new parts to the right (`left: 200`+) or above/
   below, spaced ~80–100px apart so they don't overlap. The helper script's
@@ -56,7 +76,7 @@ without guessing.
 - **Holes:** `<col><section>.<row>` — `section` `t` (top block, rows `a`–`e`) or `b`
   (bottom block, rows `f`–`j`); the row is the literal silk-screen label, so `t` always
   goes with `a`–`e` and `b` with `f`–`j`. `col` is `1`–`30` (`wokwi-breadboard-half`)
-  or `1`–`60` (`wokwi-breadboard`). Examples: `bb1:1t.a`, `bb1:45t.c`, `bb1:26b.j`,
+  or `1`–`63` (`wokwi-breadboard`, an 830-pt board). Examples: `bb1:1t.a`, `bb1:45t.c`, `bb1:26b.j`,
   `bb1:35b.g`. (Confirmed against a real Wokwi diagram.)
 - **Power rails:** `<section><polarity>.<n>` — `tp`/`tn` (top +/−), `bp`/`bn`
   (bottom +/−), `n` = position. Examples: `bb1:tp.1`, `bb1:bn.25`.
@@ -103,7 +123,7 @@ without guessing.
 - Pin names are **logical**: a breadboard's `rotate` changes only how it looks on
   screen, never its pin names. Don't let a rotated board make you second-guess.
 - **Half board has only 30 columns** — `45` doesn't exist on it (`validate` will say
-  so). Use a full `wokwi-breadboard` if you need columns 31–60.
+  so). Use a full `wokwi-breadboard` (63 columns) if you need columns 31–63.
 
 ## Common circuit patterns
 These are how the kit parts are normally wired. Reproduce the electrical intent.

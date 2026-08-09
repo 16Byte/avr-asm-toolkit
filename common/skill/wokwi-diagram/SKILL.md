@@ -67,11 +67,20 @@ the result, because a mistyped pin produces a dead circuit that looks fine.
 ## Script commands
 `list` · `add TYPE ID [--anchor SPOT --ref ID] [--top --left --rotate --attr k=v]` ·
 `move ID [--anchor SPOT --ref ID] [--top --left --rotate]` · `attr ID --attr k=v` ·
-`connect A:PIN B:PIN [--color]` · `remove ID` · `validate`. Run with
-`--file path/to/diagram.json` if not in the project dir.
+`connect A:PIN B:PIN [--color] [--plug]` · `plug ID PIN BBID:HOLE [--rotate R]` ·
+`remove ID` · `validate`. Run with `--file path/to/diagram.json` if not in the project dir.
 
 - `connect` auto-colors by net (black=GND, red=5V/VCC, green=signal); override
   with `--color`.
+- **`plug ID PIN BBID:HOLE [--rotate R]` is the way to seat a component on the board.**
+  It computes the part's `top`/`left` so PIN lands in that grid hole (`$bb` alone does
+  NOT move the part — you must position it), sets rotation, and wires **every** leg in
+  with `$bb` plugs. e.g. `add wokwi-led led1` then `plug led1 C bb1:18t.e` → LED seated,
+  anode auto-placed at `19t.e`. Calibrated for LED (0/90/180/270), resistor (0/180),
+  6mm button (90); other parts/rotations error with the list of what's known.
+- `connect ... --plug` is the low-level primitive (wires one leg with `$bb`, no
+  positioning) — prefer `plug`. Use plain colored cables only for jumpers (hole↔hole,
+  Uno↔hole). See *Wiring correctly* below.
 
 ## Placing parts (anchors, not guesswork)
 Don't drop parts at arbitrary coordinates. Put each part in a named spot **relative
@@ -124,6 +133,14 @@ patterns (LED+resistor, button pull-up/pull-down, analog sensor→ADC, 7-segment
 74HC595, etc.). Key rules:
 
 - Pin names are exact and case-sensitive: `GND.1`, `2.l`, `A0`, `V+`.
+- **Plug components in, don't cable them.** A component's legs seat directly in
+  breadboard holes (`connect COMP:PIN bb1:HOLE --plug`) — the no-solder lab reality and
+  much more legible. Reserve colored cables for jumpers (hole↔hole, Uno↔hole).
+- **One pin per hole.** A real hole fits one leg/wire; never put two endpoints on the
+  same hole. To tap a node where a leg sits (e.g. LED anode at `26t.e`), use another
+  hole in the **same column** (`26t.d` — same number/block, different row). `validate`
+  warns on doubled holes (works in Wokwi, impossible on the real board) → treat it as
+  the same stop-and-ask gate (usually just move to the adjacent hole).
 - **Breadboard holes/rails: you already know the names — wire immediately, don't go
   reading Wokwi docs (they don't publish them).** Holes `<col>t.<a-e>` /
   `<col>b.<f-j>` (e.g. `bb1:45t.c`, `bb1:26b.j`), rails `tp|tn|bp|bn.<n>` (e.g.

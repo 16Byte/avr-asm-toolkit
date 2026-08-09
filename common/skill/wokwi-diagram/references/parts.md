@@ -53,7 +53,7 @@ consider adding it to `PIN_DB` in `scripts/wokwi_diagram.py`.
 | IR receiver | `wokwi-ir-receiver` | `GND`,`VCC`,`DAT` | pairs with `wokwi-ir-remote` |
 | IR remote | `wokwi-ir-remote` | *(virtual; no wired pins)* | — |
 | Resistor | `wokwi-resistor` | `1`, `2` | `value` (ohms, e.g. `220`, `10000`) |
-| Breadboard | `wokwi-breadboard` / `-half` / `-mini` | holes `<col>t.<a-e>` / `<col>b.<f-j>` (e.g. `45t.c`, `26b.j`), rails `tp\|tn\|bp\|bn.<n>` (e.g. `bn.25`) | full=60 cols, half=30; `t`=abcde side, `b`=fghij side; `validate` checks these — see schema.md → *Breadboard pins* |
+| Breadboard | `wokwi-breadboard` / `-half` / `-mini` | holes `<col>t.<a-e>` / `<col>b.<f-j>` (e.g. `45t.c`, `26b.j`), rails `tp\|tn\|bp\|bn.<n>` (e.g. `bn.25`) | full=63 cols (830-pt), half=30; `t`=abcde side, `b`=fghij side; `validate` checks these — see schema.md → *Breadboard pins* |
 
 ## No Wokwi equivalent (skip / substitute)
 Power-supply module, 9V battery, USB cable, jumper wires (wires = connections),

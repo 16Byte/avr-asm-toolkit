@@ -17,6 +17,9 @@ Commands (run from a project dir containing diagram.json, or pass --file):
   'right' center it vertically. Explicit --top/--left override the anchor.
     attr   ID --attr k=v ...          set/replace attributes on a part
     connect A:PIN B:PIN [--color C]   wire two pins (default color by net)
+    plug   ID PIN BBID:HOLE [--rotate R]   seat a component so PIN lands in a grid
+                                      hole and wire every leg in with $bb plugs
+                                      (computes top/left from calibrated geometry)
     remove ID                         delete a part and any connections to it
     validate                          check JSON, part refs, and pin names
 
@@ -77,10 +80,44 @@ PIN_CHECK_SKIP = {"wokwi-ir-remote"}
 # Rails:  <section><polarity>.<n>  section = t|b, polarity = p (+) | n (-),
 #                                n = position.  e.g. tp.1 (top +), bn.25 (bottom -)
 # Pin names are logical — a part's rotation changes only how it looks, never them.
-BREADBOARD_COLS = {"wokwi-breadboard": 60, "wokwi-breadboard-half": 30}
+BREADBOARD_COLS = {"wokwi-breadboard": 63, "wokwi-breadboard-half": 30}  # 830-pt = 63 cols
 _BB_HOLE = re.compile(r"^(\d+)([tb])\.([a-j])$")
 _BB_RAIL = re.compile(r"^([tb][pn])\.(\d+)$")
 _SECTION_ROWS = {"t": "abcde", "b": "fghij"}
+
+# --- plug placement geometry (calibrated in-sim; see memory) ------------------
+# Seat a component's legs directly in board holes by computing its top/left/rotate
+# (the "$bb" marker draws the leg but does NOT move the part). Holes are on a 9.6px
+# grid (0.1"); the center ravine adds 19.2px between rows e and f. Per (type, rotate):
+#   anchor = (dLeft, dTop) offset from the breadboard origin that seats the REF pin at
+#            ref (pin, col, row);  pins = {pin: (dcol, drow)} hole offsets from the ref
+#            pin (drow in row-index steps, a=0..j=9, ravine handled by _row_offset).
+_PITCH = 9.6
+_ROWS = "abcdefghij"
+
+
+def _row_offset(i):
+    """Vertical px from row-index 0 to row-index i (ravine adds 19.2 past row e)."""
+    return i * _PITCH + (19.2 if i >= 5 else 0)
+
+
+PLUG_GEOMETRY = {
+    ("wokwi-led", 0):   {"anchor": (173.8, 47.4),  "ref": ("C", 18, "e"),
+                         "pins": {"C": (0, 0), "A": (1, 0)}},
+    ("wokwi-led", 90):  {"anchor": (23.0, 97.8),   "ref": ("C", 1, "f"),
+                         "pins": {"C": (0, 0), "A": (0, 1)}},
+    ("wokwi-led", 180): {"anchor": (11.0, 129.4),  "ref": ("C", 2, "h"),
+                         "pins": {"C": (0, 0), "A": (-1, 0)}},
+    ("wokwi-led", 270): {"anchor": (37.0, 127.0),  "ref": ("C", 6, "j"),
+                         "pins": {"C": (0, 0), "A": (0, -1)}},
+    ("wokwi-resistor", 0):   {"anchor": (26.0, 83.75), "ref": ("1", 1, "e"),
+                              "pins": {"1": (0, 0), "2": (6, 0)}},
+    ("wokwi-resistor", 180): {"anchor": (24.6, 74.45), "ref": ("1", 7, "d"),
+                              "pins": {"1": (0, 0), "2": (-6, 0)}},
+    ("wokwi-pushbutton-6mm", 90): {"anchor": (145.2, 90.4), "ref": ("1.l", 16, "e"),
+                                   "pins": {"1.l": (0, 0), "2.l": (-2, 0),
+                                            "1.r": (0, 1), "2.r": (-2, 1)}},
+}
 
 # Real ELEGOO full board: each power rail is physically SPLIT at the center into
 # two halves of 25 holes (5 groups of 5). Wokwi treats the rail as one continuous
@@ -139,6 +176,29 @@ def _rail_split_warnings(doc):
                 f"{n_h} half. On the real split board no single region has both power "
                 f"and ground, so nothing there can use both. Put the + and - feeds in "
                 f"the same half, or bridge the rail you need across the center.")
+    return warns
+
+
+def _one_pin_per_hole_warnings(doc):
+    """A real breadboard hole takes exactly ONE pin/leg. Wokwi lets you stack any
+    number of endpoints on the same hole; the physical ELEGOO board can't. Warn on
+    any breadboard hole referenced by more than one connection endpoint."""
+    types = {p["id"]: p.get("type") for p in doc["parts"]}
+    count = {}
+    for c in doc["connections"]:
+        for ep in (c[0], c[1]):
+            pid, _, pin = ep.partition(":")
+            if types.get(pid) in BACKGROUND_TYPES:      # a breadboard hole
+                count[(pid, pin)] = count.get((pid, pin), 0) + 1
+    warns = []
+    for (pid, pin), n in sorted(count.items()):
+        if n > 1:
+            hint = ("same column, a different a-e/f-j row" if _BB_HOLE.match(pin)
+                    else "a nearby free hole on the same rail")
+            warns.append(
+                f"{pid}:{pin} has {n} things in one hole: a real breadboard hole takes "
+                f"only one pin. Move the extra to another free hole on the same node "
+                f"({hint}); it's electrically identical.")
     return warns
 
 
@@ -370,9 +430,73 @@ def cmd_connect(doc, a):
         pid = ep.split(":", 1)[0]
         if not find_part(doc, pid):
             sys.exit(f"no part id '{pid}' (referenced by {ep})")
-    color = a.color or _net_color(a.a, a.b)
-    doc["connections"].append([a.a, a.b, color, []])
-    print(f"connected {a.a} <-> {a.b} ({color})")
+    if a.plug:
+        # Seat a component leg directly in a breadboard hole (no cable). Wokwi's
+        # marker for this is an empty color + a "$bb" route, e.g.
+        #   [ "led1:A", "bb1:26t.e", "", [ "$bb" ] ]
+        doc["connections"].append([a.a, a.b, "", ["$bb"]])
+        print(f"plugged {a.a} into {a.b}")
+    else:
+        color = a.color or _net_color(a.a, a.b)
+        doc["connections"].append([a.a, a.b, color, []])
+        print(f"connected {a.a} <-> {a.b} ({color})")
+
+
+def cmd_plug(doc, a):
+    """Position a component so PIN seats in BBID:HOLE (a grid hole), and wire every
+    leg into its hole with $bb plugs. Computes top/left/rotate from PLUG_GEOMETRY."""
+    part = find_part(doc, a.id) or sys.exit(f"no part id '{a.id}'")
+    rot = a.rotate if a.rotate is not None else int(part.get("rotate", 0))
+    geo = PLUG_GEOMETRY.get((part["type"], rot))
+    if not geo:
+        avail = ", ".join(sorted(f"{t}@{r}" for (t, r) in PLUG_GEOMETRY))
+        sys.exit(f"no plug geometry for {part['type']} at rotate {rot}. "
+                 f"Calibrated: {avail}. (Add a row to PLUG_GEOMETRY to teach it.)")
+    if ":" not in a.hole:
+        sys.exit("hole must be BBID:HOLE, e.g. bb1:18t.e")
+    bbid, hole = a.hole.split(":", 1)
+    bb = find_part(doc, bbid) or sys.exit(f"no part id '{bbid}'")
+    if bb.get("type") not in BACKGROUND_TYPES:
+        sys.exit(f"{bbid} is not a breadboard")
+    m = _BB_HOLE.match(hole)
+    if not m:
+        sys.exit(f"plug target must be a grid hole <col>t|b.<a-j>, got '{hole}'")
+    if a.pin not in geo["pins"]:
+        sys.exit(f"{part['type']} plug geometry has no pin '{a.pin}' "
+                 f"(pins: {', '.join(geo['pins'])})")
+    cols = BREADBOARD_COLS.get(bb["type"], 63)
+    col, row_i = int(m.group(1)), _ROWS.index(m.group(3))
+    # back-compute the reference pin's hole from the pin the caller anchored on
+    dc, dr = geo["pins"][a.pin]
+    ref_col, ref_row_i = col - dc, row_i - dr
+    # translate the calibration anchor by whole pitches to the requested spot
+    g_col, g_row_i = geo["ref"][1], _ROWS.index(geo["ref"][2])
+    d_left = geo["anchor"][0] + (ref_col - g_col) * _PITCH
+    d_top = geo["anchor"][1] + (_row_offset(ref_row_i) - _row_offset(g_row_i))
+    # resolve every pin's hole first (so we fail before mutating on off-board legs)
+    seats = []
+    for pin, (pdc, pdr) in geo["pins"].items():
+        pc, pri = ref_col + pdc, ref_row_i + pdr
+        if not (0 <= pri < len(_ROWS)) or not (1 <= pc <= cols):
+            sys.exit(f"pin {pin} would land off the board (col {pc}, "
+                     f"row {_ROWS[pri] if 0 <= pri < len(_ROWS) else pri})")
+        pr = _ROWS[pri]
+        seats.append((pin, f"{pc}{'t' if pr in 'abcde' else 'b'}.{pr}"))
+    # place the part
+    part["top"] = round(float(bb.get("top", 0)) + d_top, 1)
+    part["left"] = round(float(bb.get("left", 0)) + d_left, 1)
+    if rot:
+        part["rotate"] = rot
+    else:
+        part.pop("rotate", None)
+    # replace this part's connections with fresh $bb plugs to each seated hole
+    doc["connections"] = [c for c in doc["connections"]
+                          if c[0].split(":", 1)[0] != a.id
+                          and c[1].split(":", 1)[0] != a.id]
+    for pin, h in seats:
+        doc["connections"].append([f"{a.id}:{pin}", f"{bbid}:{h}", "", ["$bb"]])
+    print(f"plugged {a.id} ({part['type']} @{rot}) at top={part['top']} "
+          f"left={part['left']}: " + ", ".join(f"{p}->{h}" for p, h in seats))
 
 
 def cmd_remove(doc, a):
@@ -430,7 +554,7 @@ def cmd_validate(doc, a):
                 problems.append(
                     f"NOTE: pins for type '{t}' not in PIN_DB; verify {ep} "
                     f"at https://docs.wokwi.com/parts/{t}")
-    warnings = _rail_split_warnings(doc)
+    warnings = _rail_split_warnings(doc) + _one_pin_per_hole_warnings(doc)
     if problems:
         print("validate: found issues:")
         for p in problems:
@@ -472,7 +596,16 @@ def main():
     p.set_defaults(func=cmd_attr)
 
     p = sub.add_parser("connect"); p.add_argument("a"); p.add_argument("b")
-    p.add_argument("--color"); p.set_defaults(func=cmd_connect)
+    p.add_argument("--color")
+    p.add_argument("--plug", action="store_true",
+                   help="seat a component leg directly in a breadboard hole "
+                        "(no cable) — use for COMP:PIN -> BB:HOLE")
+    p.set_defaults(func=cmd_connect)
+
+    p = sub.add_parser("plug"); p.add_argument("id"); p.add_argument("pin")
+    p.add_argument("hole", help="BBID:HOLE grid target, e.g. bb1:18t.e")
+    p.add_argument("--rotate", type=int, help="0/90/180/270 (default: the part's)")
+    p.set_defaults(func=cmd_plug)
 
     p = sub.add_parser("remove"); p.add_argument("id"); p.set_defaults(func=cmd_remove)
     p = sub.add_parser("list"); p.set_defaults(func=cmd_list)

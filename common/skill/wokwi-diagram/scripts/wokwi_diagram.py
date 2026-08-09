@@ -20,6 +20,9 @@ Commands (run from a project dir containing diagram.json, or pass --file):
     plug   ID PIN BBID:HOLE [--rotate R]   seat a component so PIN lands in a grid
                                       hole and wire every leg in with $bb plugs
                                       (computes top/left from calibrated geometry)
+    serial [--display D --newline N --collapse --convert-eol]   configure the
+                                      Serial Monitor (display: auto|always|never|
+                                      plotter|terminal; newline: lf|cr|crlf|none)
     remove ID                         delete a part and any connections to it
     validate                          check JSON, part refs, and pin names
 
@@ -500,6 +503,32 @@ def cmd_plug(doc, a):
           f"left={part['left']}: " + ", ".join(f"{p}->{h}" for p, h in seats))
 
 
+# Serial Monitor config (top-level "serialMonitor" key in diagram.json).
+_SERIAL_DISPLAY = ("auto", "always", "never", "plotter", "terminal")
+_SERIAL_NEWLINE = ("lf", "cr", "crlf", "none")
+
+
+def cmd_serial(doc, a):
+    """Set/merge the diagram's serialMonitor block. Only given options change; the
+    rest are left as-is. Default display 'auto' is why the monitor is easy to lose —
+    'always' opens it from sim start, 'terminal' is the XTerm view (color, good for
+    typing input)."""
+    sm = doc.setdefault("serialMonitor", {})
+    if a.display is not None:
+        sm["display"] = a.display
+    if a.newline is not None:
+        sm["newline"] = a.newline
+    if a.collapse is not None:
+        sm["collapse"] = a.collapse
+    if a.convert_eol is not None:
+        sm["convertEol"] = a.convert_eol
+    if not sm:
+        del doc["serialMonitor"]
+        print("serialMonitor: unset (Wokwi defaults: display=auto, newline=lf)")
+    else:
+        print("serialMonitor: " + json.dumps(sm))
+
+
 def cmd_remove(doc, a):
     if not find_part(doc, a.id):
         sys.exit(f"no part id '{a.id}'")
@@ -607,6 +636,17 @@ def main():
     p.add_argument("hole", help="BBID:HOLE grid target, e.g. bb1:18t.e")
     p.add_argument("--rotate", type=int, help="0/90/180/270 (default: the part's)")
     p.set_defaults(func=cmd_plug)
+
+    p = sub.add_parser("serial")
+    p.add_argument("--display", choices=_SERIAL_DISPLAY,
+                   help="auto (default, easy to lose) | always | never | plotter | terminal")
+    p.add_argument("--newline", choices=_SERIAL_NEWLINE,
+                   help="appended to typed input lines: lf (default) | cr | crlf | none")
+    p.add_argument("--collapse", action=argparse.BooleanOptionalAction, default=None)
+    p.add_argument("--convert-eol", dest="convert_eol",
+                   action=argparse.BooleanOptionalAction, default=None,
+                   help="terminal mode: convert \\n to \\r\\n")
+    p.set_defaults(func=cmd_serial)
 
     p = sub.add_parser("remove"); p.add_argument("id"); p.set_defaults(func=cmd_remove)
     p = sub.add_parser("list"); p.set_defaults(func=cmd_list)

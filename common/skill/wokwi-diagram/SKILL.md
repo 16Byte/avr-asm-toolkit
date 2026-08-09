@@ -68,11 +68,15 @@ the result, because a mistyped pin produces a dead circuit that looks fine.
 `list` · `add TYPE ID [--anchor SPOT --ref ID] [--top --left --rotate --attr k=v]` ·
 `move ID [--anchor SPOT --ref ID] [--top --left --rotate]` · `attr ID --attr k=v` ·
 `connect A:PIN B:PIN [--color] [--plug]` · `plug ID PIN BBID:HOLE [--rotate R]` ·
-`remove ID` · `validate`. Run with `--file path/to/diagram.json` if not in the project dir.
+`serial [--display D --newline N --collapse --convert-eol]` · `remove ID` · `validate`.
+Run with `--file path/to/diagram.json` if not in the project dir.
 
 - `connect` auto-colors by net (black=GND, red=5V/VCC, green=signal; override with
   `--color`) and auto-routes the wire with Wokwi's `"*"` token — a clean orthogonal
   path, not a diagonal. Good for jumpers; component legs use `plug`/`--plug` instead.
+- If the sketch uses `Serial` (labs that read typed input / print results), set
+  `serial --display always` (or `terminal`) so the monitor stays visible instead of
+  getting lost — see *Serial Monitor* in `references/schema.md`.
 - **`plug ID PIN BBID:HOLE [--rotate R]` is the way to seat a component on the board.**
   It computes the part's `top`/`left` so PIN lands in that grid hole (`$bb` alone does
   NOT move the part — you must position it), sets rotation, and wires **every** leg in

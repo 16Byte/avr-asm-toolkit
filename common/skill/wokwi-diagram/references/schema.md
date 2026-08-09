@@ -36,13 +36,15 @@ Each connection is a 4-element array:
 - Endpoints are `id:pin`; pin names are exact and case-sensitive (`GND.1`, `2.l`, `A0`).
 - `color` — wire color. Convention: `black`=GND, `red`=5V/VCC, `green`/others=signals.
   Good color use makes a diagram readable at a glance.
-- route — the wire path. Elements are relative moves (`"v12"` = down 12px, `"h-8"` =
-  left 8px) or **`"*"`, Wokwi's auto-route token** ("auto connect between points or
-  lines"). `["*"]` auto-routes the whole wire into a clean orthogonal path; you can
-  also pin the ends and auto-route the middle (`["v-10","*","v10"]`). An empty `[]`
-  draws a plain direct (diagonal) wire. **Prefer `["*"]` for jumpers** — it reads far
-  cleaner than a diagonal and you don't hand-craft segments. (`["$bb"]` is the separate
-  marker for a leg seated in a hole — see *Plugging components* below.)
+- route — the wire path, a list of moves (Wokwi's mini-language). `"v12"` = down 12px,
+  `"h-8"` = left 8px (pixels, signed). **`"*"`** (at most once) splits the list: moves
+  *before* it are anchored to the **source** pin; moves *after* it are anchored to the
+  **target** pin and applied **in reverse order**; Wokwi auto-connects the gap between.
+  So `["*"]` = no manual offsets, Wokwi routes it cleanly (orthogonal, not a diagonal).
+  Example `["v10","h5","*","v-15","h10"]` = from source, down 10 then right 5; from
+  target (reversed), right 10 then up 15. An empty `[]` draws a plain direct diagonal.
+  **Prefer `["*"]` for jumpers** — clean routing, no hand-crafted segments. (`["$bb"]`
+  is the separate marker for a leg seated in a hole — see *Plugging components* below.)
 
 ### Plugging components into the board (legibility, and how the real kit works)
 On a real solderless breadboard a component's **legs plug straight into holes** — you
@@ -151,6 +153,27 @@ to a digital pin; `COM → GND`. Multi-digit: `DIG1..n` select digits (multiplex
 
 **74HC595:** `DS→`data pin, `SHCP→`clock pin, `STCP→`latch pin, `OE→GND`,
 `MR→5V`, `VCC→5V`, `GND→GND`; `Q0..Q7` drive outputs (e.g. LED segments).
+
+## Serial Monitor
+A top-level `"serialMonitor"` key in diagram.json configures the monitor (helper:
+`serial --display … --newline … --collapse --convert-eol`):
+```json
+"serialMonitor": {
+  "display": "terminal",   // auto (default) | always | never | plotter | terminal
+  "newline": "lf",         // lf (default) | cr | crlf | none  — appended to typed input
+  "collapse": false,
+  "convertEol": false      // terminal mode only: \n -> \r\n
+}
+```
+- **`display: "auto"` is the default and the reason the monitor is easy to lose** — it
+  only appears when output shows up. For a lab that reads typed input, set
+  `"always"` (monitor open from sim start) or `"terminal"` (XTerm view, color, best for
+  interactive typing). `"plotter"` graphs numeric output.
+- **`newline`** is what gets appended when the student presses Enter — match it to what
+  the sketch parses (`Serial.parseInt`/`readStringUntil('\n')` want `lf`).
+- Wokwi limitations these keys do **not** fix: the monitor is a fresh instance each
+  time you press play, and it doesn't clear on reset. Setting `display` just keeps it
+  reliably visible so you don't have to stop/restart to find it.
 
 ## Workflow reminders
 - After **any** edit, run `validate` — it catches unknown parts, bad pin names,

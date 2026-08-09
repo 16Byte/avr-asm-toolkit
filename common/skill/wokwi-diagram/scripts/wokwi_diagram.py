@@ -438,7 +438,8 @@ def cmd_connect(doc, a):
         print(f"plugged {a.a} into {a.b}")
     else:
         color = a.color or _net_color(a.a, a.b)
-        doc["connections"].append([a.a, a.b, color, []])
+        # "*" is Wokwi's auto-route token: a clean orthogonal path, not a diagonal.
+        doc["connections"].append([a.a, a.b, color, ["*"]])
         print(f"connected {a.a} <-> {a.b} ({color})")
 
 

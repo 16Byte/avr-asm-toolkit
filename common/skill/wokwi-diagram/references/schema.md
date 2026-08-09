@@ -36,9 +36,13 @@ Each connection is a 4-element array:
 - Endpoints are `id:pin`; pin names are exact and case-sensitive (`GND.1`, `2.l`, `A0`).
 - `color` — wire color. Convention: `black`=GND, `red`=5V/VCC, `green`/others=signals.
   Good color use makes a diagram readable at a glance.
-- route — optional list of relative movements for the wire path, e.g. `"v12"`
-  (down 12px), `"h-8"` (left 8px). **An empty list `[]` is fine** — Wokwi draws a
-  direct wire. Don't hand-craft routes; leave `[]` unless the user wants tidy paths.
+- route — the wire path. Elements are relative moves (`"v12"` = down 12px, `"h-8"` =
+  left 8px) or **`"*"`, Wokwi's auto-route token** ("auto connect between points or
+  lines"). `["*"]` auto-routes the whole wire into a clean orthogonal path; you can
+  also pin the ends and auto-route the middle (`["v-10","*","v10"]`). An empty `[]`
+  draws a plain direct (diagonal) wire. **Prefer `["*"]` for jumpers** — it reads far
+  cleaner than a diagonal and you don't hand-craft segments. (`["$bb"]` is the separate
+  marker for a leg seated in a hole — see *Plugging components* below.)
 
 ### Plugging components into the board (legibility, and how the real kit works)
 On a real solderless breadboard a component's **legs plug straight into holes** — you

@@ -84,6 +84,11 @@ Run with `--file path/to/diagram.json` if not in the project dir.
   - Match `--newline` to what the sketch parses when a lab reads typed input
     (`Serial.parseInt`/`readStringUntil('\n')` want `lf`). See *Serial Monitor* in
     `references/schema.md`.
+  - **If the monitor/terminal vanishes** (in VS Code the Wokwi extension routes serial
+    to the "Wokwi Term…" terminal; killing it also stops the sim): tell the user to
+    **close all "Wokwi Simulator" tabs, then open `diagram.json` and press ▶** (green
+    play, or F1 → *Wokwi: Start Simulator*). That recreates the monitor from scratch —
+    config changes alone won't bring back a terminal you closed.
 - **`plug ID PIN BBID:HOLE [--rotate R]` is the way to seat a component on the board.**
   It computes the part's `top`/`left` so PIN lands in that grid hole (`$bb` alone does
   NOT move the part — you must position it), sets rotation, and wires **every** leg in

@@ -16,5 +16,6 @@
     [ "led1:A", "uno:13", "green", [ "v12.86", "h70", "v21.33", "h5.33" ] ],
     [ "led1:C", "uno:GND.1", "green", [ "v18.2", "h6", "v3.33", "h66" ] ]
   ],
+  "serialMonitor": { "display": "always" },
   "dependencies": {}
 }

@@ -74,9 +74,16 @@ Run with `--file path/to/diagram.json` if not in the project dir.
 - `connect` auto-colors by net (black=GND, red=5V/VCC, green=signal; override with
   `--color`) and auto-routes the wire with Wokwi's `"*"` token — a clean orthogonal
   path, not a diagonal. Good for jumpers; component legs use `plug`/`--plug` instead.
-- If the sketch uses `Serial` (labs that read typed input / print results), set
-  `serial --display always` (or `terminal`) so the monitor stays visible instead of
-  getting lost — see *Serial Monitor* in `references/schema.md`.
+- **Serial Monitor is on by default** (new projects ship `serialMonitor.display:
+  "always"`, so it opens at sim start). Toggle it on natural-language requests:
+  - *"I don't need the serial monitor / make it stop appearing / hide it"* →
+    `serial --display never`.
+  - *"bring the serial monitor back / show it / I need it now"* →
+    `serial --display always` (or `--display terminal` for the XTerm view, better for
+    typing input; `--display plotter` to graph numbers).
+  - Match `--newline` to what the sketch parses when a lab reads typed input
+    (`Serial.parseInt`/`readStringUntil('\n')` want `lf`). See *Serial Monitor* in
+    `references/schema.md`.
 - **`plug ID PIN BBID:HOLE [--rotate R]` is the way to seat a component on the board.**
   It computes the part's `top`/`left` so PIN lands in that grid hole (`$bb` alone does
   NOT move the part — you must position it), sets rotation, and wires **every** leg in

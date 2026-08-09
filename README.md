@@ -49,11 +49,12 @@ bash macos/new-avr-project.sh Lab5 --open
   simulator (getting the key is a step in "See the blink" below).
 - **Git** — to clone.
 - **Claude Code** — the AI tutor/pair-programmer (optional).
-- **Python 3** (optional) — only for the `wokwi-diagram` skill's helper
-  (`py -3` on Windows, `python3` on macOS).
+- **Python 3** — needed only by the `wokwi-diagram` skill's helper. On Windows
+  **bootstrap installs a contained Python for you** and points `AVR_TOOLKIT_PY` at it
+  (no system/Store/PlatformIO Python involved); on macOS the helper uses `python3`.
 
-(arduino-cli and the AVR toolchain are downloaded by bootstrap — you don't install
-them yourself.)
+(arduino-cli, the AVR toolchain, and — on Windows — Python are downloaded by bootstrap;
+you don't install them yourself.)
 
 ## See the blink
 The generated project is an Arduino sketch: `<Name>.ino` (drives the program) + `blink.S`

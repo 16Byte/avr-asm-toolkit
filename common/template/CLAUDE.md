@@ -51,9 +51,10 @@ Open `diagram.json` to launch Wokwi (needs the Wokwi VS Code extension + a free 
   from `<avr/io.h>`). Practice the labs' instructions in the `.S`: `sbi`, `cbi`, `sbis`, `sbic`.
 
 ## Editing the circuit (diagram.json)
-Use the **`wokwi-diagram`** skill. Run its Python helper with `py -3` (Windows) / `python3`
-(macOS) — not the bare `python` on Windows. Always `validate` after edits; keep the wiring
-in sync with the pins the code uses.
+Use the **`wokwi-diagram`** skill. Run its Python helper with the toolkit's own
+interpreter, `$env:AVR_TOOLKIT_PY` (Windows) / `python3` (macOS) — never the bare
+`python` on Windows. `AVR_TOOLKIT_PY` is set by `bootstrap.ps1`; if it's empty, re-run
+bootstrap. Always `validate` after edits; keep the wiring in sync with the pins the code uses.
 
 ## For a lab
 Replace `<Name>.ino` + `blink.S` with the lab's provided files (keep the `.ino` named to

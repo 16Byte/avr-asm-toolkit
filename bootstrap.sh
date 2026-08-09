@@ -54,6 +54,20 @@ fi
 export AVR_TOOLKIT_HOME="$RUNTIME"
 echo "AVR_TOOLKIT_HOME = $RUNTIME  (added to ~/.zprofile)"
 
+# point AVR_TOOLKIT_PY at the system python3 (macOS ships one; the wokwi-diagram
+# helper is pure stdlib, so no venv/pip is needed). Kept as a var for parity with
+# Windows, where bootstrap installs a contained Python.
+PY3="$(command -v python3 || true)"
+if [ -n "$PY3" ]; then
+  if ! grep -qF "AVR_TOOLKIT_PY=" "$ZP" 2>/dev/null; then
+    echo "export AVR_TOOLKIT_PY=\"$PY3\"" >> "$ZP"
+  fi
+  export AVR_TOOLKIT_PY="$PY3"
+  echo "AVR_TOOLKIT_PY = $PY3"
+else
+  echo "WARNING: python3 not found - install it for the wokwi-diagram skill helper." >&2
+fi
+
 # license stamp (don't clobber an existing one)
 STAMP="$RUNTIME/wokwi-license-stamp"
 if [ ! -f "$STAMP" ]; then

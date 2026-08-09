@@ -6,9 +6,11 @@
      %LOCALAPPDATA%.)
   2. Install the arduino:avr core (avr-gcc + Uno core) into a contained data dir,
      so it never clobbers a system Arduino IDE setup.
-  3. Install the wokwi-diagram skill into ~/.claude/skills.
-  4. Start the Wokwi license clock.
-  5. Smoke-test: compile the template sketch.
+  3. Download a contained Python (embeddable) for the wokwi-diagram skill helper
+     and point AVR_TOOLKIT_PY at it -- no system/Store/PlatformIO Python needed.
+  4. Install the wokwi-diagram skill into ~/.claude/skills.
+  5. Start the Wokwi license clock.
+  6. Smoke-test: compile the template sketch and run the skill helper.
 
   Needs internet on first run (arduino-cli + core download).
   The skill is installed as a live junction by default, so a later `git pull` updates
@@ -19,6 +21,11 @@ param([switch]$Copy, [switch]$AddAlias)
 $ErrorActionPreference = "Stop"
 $Repo = $PSScriptRoot
 Write-Host "AVR toolkit repo: $Repo" -ForegroundColor Cyan
+
+# Contained Python for the wokwi-diagram skill helper. We ship our own so the
+# toolkit never depends on a system/Store/PlatformIO interpreter. The helper is
+# pure stdlib, so the official embeddable package (no pip/venv) is all we need.
+$PyVer = "3.12.7"
 
 # 1) runtime dirs (SHORT path) -----------------------------------------------
 $Runtime = Join-Path $env:LOCALAPPDATA "avr-asm-toolkit"
@@ -56,6 +63,25 @@ if ($LASTEXITCODE -ne 0) { throw "arduino:avr core install failed (need internet
 [Environment]::SetEnvironmentVariable("AVR_TOOLKIT_HOME", $Runtime, "User")
 $env:AVR_TOOLKIT_HOME = $Runtime
 Write-Host "AVR_TOOLKIT_HOME = $Runtime  (persisted for your user)" -ForegroundColor Green
+
+# 4b) contained Python for the wokwi-diagram skill --------------------------
+# Download the official embeddable Python into our runtime dir (parallel to
+# arduino-cli above) and point AVR_TOOLKIT_PY at it. Nothing here touches a
+# system, Microsoft Store, or PlatformIO Python.
+$PyDir = Join-Path $Runtime "python"
+$Py    = Join-Path $PyDir "python.exe"
+if (-not (Test-Path $Py)) {
+    Write-Host "Downloading embeddable Python $PyVer..." -ForegroundColor Cyan
+    $pyzip = Join-Path $env:TEMP "avrtk-python-embed.zip"
+    Invoke-WebRequest -Uri "https://www.python.org/ftp/python/$PyVer/python-$PyVer-embed-amd64.zip" -OutFile $pyzip -UseBasicParsing
+    New-Item -ItemType Directory -Force -Path $PyDir | Out-Null
+    Expand-Archive -Path $pyzip -DestinationPath $PyDir -Force
+    Remove-Item $pyzip -Force
+}
+if (-not (Test-Path $Py)) { throw "Python install failed (no python.exe at $Py)." }
+[Environment]::SetEnvironmentVariable("AVR_TOOLKIT_PY", $Py, "User")
+$env:AVR_TOOLKIT_PY = $Py
+Write-Host "AVR_TOOLKIT_PY = $Py  (contained Python for the wokwi-diagram skill)" -ForegroundColor Green
 
 # start the Wokwi license clock at first setup (don't clobber an existing stamp)
 $Stamp = Join-Path $Runtime "wokwi-license-stamp"
@@ -105,6 +131,11 @@ $ok = ($LASTEXITCODE -eq 0) -and (Get-ChildItem $tmp -Filter "*.ino.hex" -ErrorA
 Remove-Item $tmp -Recurse -Force
 if ($ok) { Write-Host "Smoke test OK - template sketch compiled." -ForegroundColor Green }
 else     { Write-Host "Smoke test FAILED." -ForegroundColor Red; exit 1 }
+
+# 7b) smoke test: the contained Python runs the skill helper -----------------
+& $Py (Join-Path $Repo "common\skill\wokwi-diagram\scripts\wokwi_diagram.py") --help *> $null
+if ($LASTEXITCODE -eq 0) { Write-Host "Python smoke test OK - wokwi-diagram helper runs." -ForegroundColor Green }
+else { Write-Host "Python smoke test FAILED (helper did not run)." -ForegroundColor Red; exit 1 }
 
 Write-Host ""
 Write-Host "Done. Open a NEW terminal (so AVR_TOOLKIT_HOME is set), then:" -ForegroundColor Cyan

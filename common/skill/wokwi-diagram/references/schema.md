@@ -48,6 +48,63 @@ Each connection is a 4-element array:
 - Exact pixel-perfect placement doesn't affect the simulation — only wiring does.
   So prioritize correct connections; nudge positions only for readability.
 
+## Breadboard pins (known — don't go searching)
+Wokwi doesn't publish breadboard pin names, so they're captured here. **You already
+know them; wire directly.** The script's `validate` checks them, so you can confirm
+without guessing.
+
+- **Holes:** `<col><section>.<row>` — `section` `t` (top block, rows `a`–`e`) or `b`
+  (bottom block, rows `f`–`j`); the row is the literal silk-screen label, so `t` always
+  goes with `a`–`e` and `b` with `f`–`j`. `col` is `1`–`30` (`wokwi-breadboard-half`)
+  or `1`–`60` (`wokwi-breadboard`). Examples: `bb1:1t.a`, `bb1:45t.c`, `bb1:26b.j`,
+  `bb1:35b.g`. (Confirmed against a real Wokwi diagram.)
+- **Power rails:** `<section><polarity>.<n>` — `tp`/`tn` (top +/−), `bp`/`bn`
+  (bottom +/−), `n` = position. Examples: `bb1:tp.1`, `bb1:bn.25`.
+- **The full board's rails are SPLIT at the center — wire as if they are, and teach
+  it.** A real ELEGOO full board breaks each `+`/`−` rail at the midline into two
+  halves of ~25 holes (5 groups of 5). Wokwi treats the rail as one continuous node,
+  so a wire that crosses the split *works in the sim* — but it's a **dead net on the
+  real kit**. This is a course concept, so the goal isn't just "make Wokwi light up,"
+  it's to build what would also work on hardware. **Default behavior: keep a rail's
+  feed and its taps on the same half, or add a bridge jumper across the center
+  (`tp.25 ↔ tp.26`). Explain the split to the student as you do it.**
+  - `validate` flags two split hazards (left half = `.n ≤ 25`, right = `.n > 25`):
+    (1) **one rail used on both halves** without a bridge; and (2) the **`+` rail and
+    `-` rail on opposite halves** — so no single region of the real board has both power
+    and ground (e.g. `5V→tp.10` on the left while `GND→tn.35` is on the right). Both
+    work in Wokwi, both fail on hardware.
+  - **Whenever a request would land on either warning — stop and ask (don't silently
+    comply, don't silently "fix"), even if the user never mentions hardware.** The moment
+    you can see the wiring would power/tap the wrong half *or* put the + and − feeds on
+    opposite halves (e.g. "put 5V on pin 10" when ground is already on the right half),
+    pause *mid-response* and use `AskUserQuestion`.
+    - **Teach the reality — assume they don't know it.** e.g. *"Heads up: this won't work
+      on the real ELEGOO breadboard you're using in the lab. Each power rail is split
+      down the middle (the break Dr. Song shows in the videos), so 5V on the left half
+      never reaches your circuit on the right. Wokwi lights it up because it doesn't
+      simulate the split, but the physical build would be dead."*
+    - **Options, hardware-correct first:** (1) *(Recommended)* move the feed into the
+      half you're already working in — same region as the ground/circuit, no jumper;
+      (2) keep the requested pin and add a bridge across the split so both halves connect;
+      (3) wire it exactly as asked, sim-only (works in Wokwi, dead on the real board).
+    Only take the sim-only path if they pick it.
+  - The half board (`wokwi-breadboard-half`) rails are continuous — no split.
+- **Rail `.n` ≠ the printed column number.** Rail holes are grouped in fives (with
+  gaps), so there are fewer of them than the 60 grid columns and `.n` runs *ahead* of
+  the silk-screen number (`tn.45` sits out near printed ~54). Grid holes don't drift —
+  `45t.a` is under printed 45. When a student says "ground rail at 45" they mean the
+  printed 45, so place the wire near printed 45 for readability (roughly
+  `n = printed * 5/6`).
+- The `t`/`b` prefix picks which grid block: **`t` = the "abcde side"** (top block,
+  rows `a`–`e`), **`b` = the "fghij side"** (bottom block, rows `f`–`j`). A column's
+  five holes within a block share one node, so `45t.a`…`45t.e` are the same electrical
+  point (and likewise `45b.f`…`45b.j`). The `a`–`e`/`f`–`j` halves are separated by the
+  center channel and are **not** connected to each other.
+- Pin names are **logical**: a breadboard's `rotate` changes only how it looks on
+  screen, never its pin names. Don't let a rotated board make you second-guess.
+- **Half board has only 30 columns** — `45` doesn't exist on it (`validate` will say
+  so). Use a full `wokwi-breadboard` if you need columns 31–60.
+
 ## Common circuit patterns
 These are how the kit parts are normally wired. Reproduce the electrical intent.
 

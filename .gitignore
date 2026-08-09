@@ -5,3 +5,7 @@
 **/build/
 **/obj/
 *.o
+
+# python bytecode cache (skill helper)
+__pycache__/
+*.pyc

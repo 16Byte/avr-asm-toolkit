@@ -71,6 +71,22 @@ interpreter, `$env:AVR_TOOLKIT_PY` (Windows) / `python3` (macOS) — never the b
 `python` on Windows. `AVR_TOOLKIT_PY` is set by `bootstrap.ps1`; if it's empty, re-run
 bootstrap. Always `validate` after edits; keep the wiring in sync with the pins the code uses.
 
-## For a lab
-Replace `<Name>.ino` + `blink.S` with the lab's provided files (keep the `.ino` named to
-match the folder). Submit the `.ino` + `.S` the lab asks for.
+## Scaffolded from a template (labs come pre-wired)
+This project was scaffolded from a **template** picked by its name. If the name matched a
+curated template (e.g. `Lab3`), the lab's own starter `.ino` + `.S` and its **canonical
+`diagram.json` are already here** — the circuit is done, just open `diagram.json` in Wokwi.
+A non-matching name gets the default `blinky` template.
+
+A lab template also carries its reference docs in this folder:
+- `LAB.md` — the full lab writeup (spec, tables, circuit, deliverables).
+- `pinouts.md` — the wiring spec (signal map + breadboard net list).
+- `NOTES.md` — known issues / quirks.
+
+Read them before improvising; keep the provided source pristine and do the graded work in
+the `.S`. Submit the `.ino` + `.S` the lab asks for.
+
+**Diagram fallback (rarely needed — it's already installed):** if asked to (re)apply the
+circuit, **COPY `$env:AVR_TOOLKIT_HOME\templates\<Name>\diagram.json` over this project's
+`diagram.json`, verbatim** — don't regenerate or hand-edit — then `validate` with the
+wokwi-diagram skill. Only build from `pinouts.md` if no `diagram.json` exists. Fine
+positional/wire cleanup is the user's job in the Wokwi web editor.

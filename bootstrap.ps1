@@ -129,6 +129,27 @@ if (-not $Copy) {
     Write-Host "Skill copied -> $SkillDst" -ForegroundColor Green
 }
 
+# 5b) install the project templates (for the CLAUDE.md diagram fallback) ------
+# Junction repo\common\templates -> AVR_TOOLKIT_HOME\templates (same pattern as the
+# skill) so a project can re-fetch its template's canonical diagram.json by name
+# ($env:AVR_TOOLKIT_HOME\templates\<Name>\diagram.json). Normally unnecessary -- the
+# scaffolder installs the diagram at creation -- but this backstops rebuilds and
+# projects made before the template existed. `git pull` keeps it current.
+$TplSrc = Join-Path $Repo "common\templates"
+$TplDst = Join-Path $Runtime "templates"
+if (Test-Path $TplSrc) {
+    if (-not $Copy) {
+        if (Test-Path $TplDst) { cmd /c rmdir /S /Q "`"$TplDst`"" | Out-Null }
+        cmd /c mklink /J "`"$TplDst`"" "`"$TplSrc`"" | Out-Null
+        Write-Host "Templates linked (junction) -> $TplDst  (git pull keeps them current)" -ForegroundColor Green
+    } else {
+        if (Test-Path $TplDst) { cmd /c rmdir /S /Q "`"$TplDst`"" | Out-Null }
+        New-Item -ItemType Directory -Force -Path $TplDst | Out-Null
+        Copy-Item (Join-Path $TplSrc "*") $TplDst -Recurse -Force
+        Write-Host "Templates copied -> $TplDst" -ForegroundColor Green
+    }
+}
+
 # 6) optional alias -----------------------------------------------------------
 if ($AddAlias) {
     if (-not (Test-Path $PROFILE)) { New-Item -ItemType File -Force -Path $PROFILE | Out-Null }
@@ -141,7 +162,7 @@ if ($AddAlias) {
 # 7) smoke test: compile the template sketch ---------------------------------
 $tmp = Join-Path $env:TEMP ("avrtk-smoke-" + [guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Force -Path $tmp | Out-Null
-& $Cli --config-file $Cfg compile --fqbn arduino:avr:uno --output-dir $tmp (Join-Path $Repo "common\template") 2>&1 | Out-Null
+& $Cli --config-file $Cfg compile --fqbn arduino:avr:uno --output-dir $tmp (Join-Path $Repo "common\templates\blinky") 2>&1 | Out-Null
 $ok = ($LASTEXITCODE -eq 0) -and (Get-ChildItem $tmp -Filter "*.ino.hex" -ErrorAction SilentlyContinue)
 Remove-Item $tmp -Recurse -Force
 if ($ok) { Write-Host "Smoke test OK - template sketch compiled." -ForegroundColor Green }

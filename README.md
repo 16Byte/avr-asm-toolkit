@@ -134,10 +134,11 @@ template, and the build scripts (new projects pick them up when scaffolded). Re-
 ```
 common/
   skill/wokwi-diagram/    the diagram.json editing skill
-  template/               the Arduino sketch template:
-    template.ino          (renamed to <Name>.ino on scaffold) — calls the .S
-    blink.S               GNU-syntax assembly (sbi/cbi) the .ino calls
-    wokwi.toml, diagram.json, CLAUDE.md, README.md, .gitignore
+  base/                   shared boilerplate every project gets:
+    CLAUDE.md, README.md, wokwi.toml, .gitignore, .vscode/
+  templates/              curated project starters, chosen by project name on scaffold:
+    blinky/               default — blinky.ino (-> <Name>.ino), blink.S, diagram.json
+    Lab3/                 a lab — Lab3.ino, FatMonitor.S, diagram.json + LAB/pinouts/NOTES
 windows/                  New-AvrProject.ps1, Reset-WokwiLicense.ps1, build.ps1 overlay
 macos/                    new-avr-project.sh, reset-wokwi-license.sh, build.sh overlay
 bootstrap.ps1 / bootstrap.sh

@@ -30,8 +30,9 @@ labs — Arduino `.ino` + AVR assembly `.S` — with the circuit authored *as co
 | Piece | Role |
 |---|---|
 | `bootstrap.ps1` / `bootstrap.sh` | One-time per-machine setup. Installs **contained** arduino-cli + `arduino:avr` core, an **embeddable Python**, and **wokwi-cli** under `%LOCALAPPDATA%\avr-asm-toolkit` (Win) / `~/.local/share/...` (mac). Persists `AVR_TOOLKIT_HOME` + `AVR_TOOLKIT_PY`. Installs the wokwi-diagram skill as a live junction/symlink. |
-| `common/template/` | Project scaffold: `<Name>.ino`, `blink.S`, `wokwi.toml`, `diagram.json`, `CLAUDE.md`. |
-| `windows/New-AvrProject.ps1` · `macos/new-avr-project.sh` | Scaffold a new lab project from the template. |
+| `common/base/` | Shared boilerplate every project gets: `CLAUDE.md`, `README.md`, `wokwi.toml`, `.gitignore`, `.vscode/`. |
+| `common/templates/` | Curated project starters chosen by name: `blinky/` (default) + per-lab folders (e.g. `Lab3/` = `.ino` + `.S` + `diagram.json` + `LAB.md`/`pinouts.md`/`NOTES.md`). |
+| `windows/New-AvrProject.ps1` · `macos/new-avr-project.sh` | Scaffold a project: base + name-matched template (else `blinky`) + overlay. |
 | `build.ps1` / `build.sh` (template overlay) | `arduino-cli compile` → normalize to `build/firmware.hex` + `.elf`. Locates the toolchain via `AVR_TOOLKIT_HOME`. |
 | **`wokwi-diagram` skill** (`~/.claude/skills/wokwi-diagram`) | The heart. `scripts/wokwi_diagram.py` edits `diagram.json`: `add/move/connect/plug/serial/remove/list/validate`. `references/schema.md` + `parts.md` capture the pin/wiring knowledge. Source of truth lives in `common/skill/`. |
 | `windows/Sim-Run.ps1` | Headless run of a sketch via wokwi-cli — returns serial output, can feed input and assert. |

@@ -109,9 +109,22 @@ else
   rm -rf "$SKILL_DST"; ln -s "$SKILL_SRC" "$SKILL_DST"; echo "Skill symlinked -> $SKILL_DST  (git pull keeps it current)"
 fi
 
-# smoke test: compile the template sketch
+# install project templates (for the CLAUDE.md diagram fallback): symlink
+# common/templates -> AVR_TOOLKIT_HOME/templates so a project can re-fetch its template's
+# diagram.json by name. Normally unnecessary (the scaffolder installs it at creation).
+TPL_SRC="$REPO/common/templates"
+TPL_DST="$RUNTIME/templates"
+if [ -d "$TPL_SRC" ]; then
+  if [ "${1:-}" = "--copy" ]; then
+    rm -rf "$TPL_DST"; mkdir -p "$TPL_DST"; cp -R "$TPL_SRC/." "$TPL_DST/"; echo "Templates copied -> $TPL_DST"
+  else
+    rm -rf "$TPL_DST"; ln -s "$TPL_SRC" "$TPL_DST"; echo "Templates symlinked -> $TPL_DST  (git pull keeps them current)"
+  fi
+fi
+
+# smoke test: compile the default (blinky) template sketch
 TMP="$(mktemp -d)"
-if "$CLI" --config-file "$CFG" compile --fqbn arduino:avr:uno --output-dir "$TMP" "$REPO/common/template" >/dev/null 2>&1 \
+if "$CLI" --config-file "$CFG" compile --fqbn arduino:avr:uno --output-dir "$TMP" "$REPO/common/templates/blinky" >/dev/null 2>&1 \
    && ls "$TMP"/*.ino.hex >/dev/null 2>&1; then
   echo "Smoke test OK - template sketch compiled."
 else

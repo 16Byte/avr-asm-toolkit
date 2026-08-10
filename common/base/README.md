@@ -23,7 +23,7 @@ command) and run `reset-wokwi-license` (or edit `wokwi-license-stamp`) to reset 
 ## Files
 ```
 <Name>.ino    Arduino sketch — drives the program; calls the .S
-blink.S       AVR assembly (sbi/cbi ...) the .ino calls
+<Name>.S      AVR assembly (sbi/cbi ...) the .ino calls (e.g. blink.S, FatMonitor.S)
 wokwi.toml    points Wokwi at build/firmware.hex + .elf
 diagram.json  virtual board + wiring
 build.ps1 / build.sh   arduino-cli compile -> build/firmware.hex
@@ -40,5 +40,6 @@ Three free ways (only the first needs Claude Code):
 A **paid Wokwi license** also unlocks the graphical diagram editor inside VS Code.
 
 ## For a lab
-Replace `<Name>.ino` + `blink.S` with the lab's provided files (keep the `.ino` named the same
-as the folder). Submit the `.ino` + `.S` the lab asks for.
+If you scaffolded with a lab's name (e.g. `Lab3`), its starter `.ino` + `.S` and pre-wired
+`diagram.json` are already here — plus `LAB.md` / `pinouts.md` / `NOTES.md` for reference.
+Do the graded work in the `.S`; submit the `.ino` + `.S` the lab asks for.

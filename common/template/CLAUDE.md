@@ -42,6 +42,21 @@ it's missing, the toolkit bootstrap hasn't been run on this machine yet; run tha
 Open `diagram.json` to launch Wokwi (needs the Wokwi VS Code extension + a free license).
 `wokwi.toml` points at `build/firmware.hex` (+ `.elf`, so source-level debug works).
 
+## Run/debug headless with wokwi-cli ("why isn't this working?")
+`wokwi-cli` (installed by bootstrap) can **run the sketch in Wokwi's cloud and hand back
+the serial output**, so you can actually execute a lab, read what it prints, and diagnose
+— instead of guessing. It's **metered/cloud and needs a token**, so use it on demand:
+- Token (user sets once): `[Environment]::SetEnvironmentVariable('WOKWI_CLI_TOKEN','wok_...','User')`.
+- Run + read serial, optionally feeding typed input and asserting:
+  `.\windows\Sim-Run.ps1 -InputText "22`n33`n44`n" -ExpectText "The sum is 99" -Timeout 10000`
+  (from the project dir). It builds if needed, prints the serial log, exits 0 on a met
+  `-ExpectText`. Use this to verify a lab's behavior or debug why the output is wrong.
+- **`wokwi-cli lint`** (offline, no token) is an authoritative pin/part check — a good
+  second opinion alongside the wokwi-diagram skill's `validate`:
+  `& "$env:AVR_TOOLKIT_HOME\wokwi-cli\wokwi-cli.exe" lint --offline .`
+- **Screenshots are NOT useful for layout** (per-part crop, can't shoot a breadboard) —
+  eyeball the diagram in the sim yourself; don't reach for wokwi-cli to "see" a circuit.
+
 ## Assembly conventions (avr-gcc / GNU `.S`)
 - Assembly lives in `.S` files (capital S → the C preprocessor runs, so
   `#include <avr/io.h>` works). Use `_SFR_IO_ADDR(PORTB)` etc. for `in`/`out`/`sbi`/`cbi`.

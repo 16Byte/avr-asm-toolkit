@@ -179,3 +179,6 @@ A top-level `"serialMonitor"` key in diagram.json configures the monitor (helper
 - After **any** edit, run `validate` — it catches unknown parts, bad pin names,
   and duplicate ids before you waste time in the simulator.
 - Keep `id`s meaningful (`led_red`, `btn_start`) — they show up in connections.
+- For an authoritative second opinion on part/pin names, `wokwi-cli lint --offline .`
+  (no token needed) checks against Wokwi's registry. Our `validate` still owns the
+  hardware-aware checks (rail split, one-pin-per-hole, plug geometry) that lint doesn't.

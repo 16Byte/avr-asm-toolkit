@@ -8,9 +8,11 @@
      so it never clobbers a system Arduino IDE setup.
   3. Download a contained Python (embeddable) for the wokwi-diagram skill helper
      and point AVR_TOOLKIT_PY at it -- no system/Store/PlatformIO Python needed.
-  4. Install the wokwi-diagram skill into ~/.claude/skills.
-  5. Start the Wokwi license clock.
-  6. Smoke-test: compile the template sketch and run the skill helper.
+  4. Download a contained wokwi-cli (headless sim: screenshots/run/lint). Using it
+     needs a WOKWI_CLI_TOKEN that YOU set (never this script) -- see the final note.
+  5. Install the wokwi-diagram skill into ~/.claude/skills.
+  6. Start the Wokwi license clock.
+  7. Smoke-test: compile the template sketch and run the skill helper.
 
   Needs internet on first run (arduino-cli + core download).
   The skill is installed as a live junction by default, so a later `git pull` updates
@@ -83,6 +85,19 @@ if (-not (Test-Path $Py)) { throw "Python install failed (no python.exe at $Py).
 $env:AVR_TOOLKIT_PY = $Py
 Write-Host "AVR_TOOLKIT_PY = $Py  (contained Python for the wokwi-diagram skill)" -ForegroundColor Green
 
+# 4c) contained wokwi-cli (headless sim: screenshots, run+assert, lint) --------
+# Same contained pattern as arduino-cli/Python. Running it needs a WOKWI_CLI_TOKEN
+# (a credential the USER sets, never this script) — see the note at the end.
+$WokDir = Join-Path $Runtime "wokwi-cli"
+$Wok    = Join-Path $WokDir "wokwi-cli.exe"
+if (-not (Test-Path $Wok)) {
+    Write-Host "Downloading wokwi-cli..." -ForegroundColor Cyan
+    New-Item -ItemType Directory -Force -Path $WokDir | Out-Null
+    Invoke-WebRequest -Uri "https://github.com/wokwi/wokwi-cli/releases/latest/download/wokwi-cli-win-x64.exe" -OutFile $Wok -UseBasicParsing
+}
+if (-not (Test-Path $Wok)) { throw "wokwi-cli install failed (no exe at $Wok)." }
+Write-Host "wokwi-cli -> $Wok" -ForegroundColor Green
+
 # start the Wokwi license clock at first setup (don't clobber an existing stamp)
 $Stamp = Join-Path $Runtime "wokwi-license-stamp"
 if (-not (Test-Path $Stamp)) {
@@ -137,6 +152,17 @@ else     { Write-Host "Smoke test FAILED." -ForegroundColor Red; exit 1 }
 if ($LASTEXITCODE -eq 0) { Write-Host "Python smoke test OK - wokwi-diagram helper runs." -ForegroundColor Green }
 else { Write-Host "Python smoke test FAILED (helper did not run)." -ForegroundColor Red; exit 1 }
 
+# 7c) smoke test: wokwi-cli runs (no token needed just for --help) ------------
+& $Wok --help *> $null
+if ($LASTEXITCODE -eq 0) { Write-Host "wokwi-cli smoke test OK." -ForegroundColor Green }
+else { Write-Host "wokwi-cli smoke test FAILED (did not run)." -ForegroundColor Red; exit 1 }
+
 Write-Host ""
 Write-Host "Done. Open a NEW terminal (so AVR_TOOLKIT_HOME is set), then:" -ForegroundColor Cyan
 Write-Host "  .\windows\New-AvrProject.ps1 Lab1 -Open"
+Write-Host ""
+Write-Host "wokwi-cli features (screenshots/run/lint) need a free API token:" -ForegroundColor Cyan
+Write-Host "  1) get one at https://wokwi.com/dashboard/ci  (starts 'wok_')"
+Write-Host "  2) persist it (yourself):"
+Write-Host "     [Environment]::SetEnvironmentVariable('WOKWI_CLI_TOKEN','wok_...','User')"
+Write-Host "  Never commit or share the token." -ForegroundColor DarkGray

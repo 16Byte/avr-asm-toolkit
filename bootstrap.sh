@@ -4,9 +4,11 @@
 # 1. Download arduino-cli into the runtime dir.
 # 2. Install the arduino:avr core (avr-gcc + Uno core) into a contained data dir,
 #    so it never clobbers a system Arduino IDE setup.
-# 3. Install the wokwi-diagram skill into ~/.claude/skills.
-# 4. Start the Wokwi license clock.
-# 5. Smoke-test: compile the template sketch.
+# 3. Download a contained wokwi-cli (headless sim: screenshots/run/lint); using it
+#    needs a WOKWI_CLI_TOKEN that YOU set (never this script) - see the final note.
+# 4. Install the wokwi-diagram skill into ~/.claude/skills.
+# 5. Start the Wokwi license clock.
+# 6. Smoke-test: compile the template sketch.
 #
 # Needs internet on first run (arduino-cli + core download).
 # The skill is symlinked by default, so a later 'git pull' updates it with no re-copy.
@@ -68,6 +70,21 @@ else
   echo "WARNING: python3 not found - install it for the wokwi-diagram skill helper." >&2
 fi
 
+# contained wokwi-cli (headless sim: screenshots/run/lint). Using it needs a
+# WOKWI_CLI_TOKEN that YOU set (never this script) - see the note at the end.
+WOK_DIR="$RUNTIME/wokwi-cli"
+WOK="$WOK_DIR/wokwi-cli"
+if [ ! -x "$WOK" ]; then
+  echo "Downloading wokwi-cli..."
+  mkdir -p "$WOK_DIR"
+  arch="$(uname -m)"; asset="wokwi-cli-macos-arm64"
+  [ "$arch" = "x86_64" ] && asset="wokwi-cli-macos-x64"
+  curl -fsSL "https://github.com/wokwi/wokwi-cli/releases/latest/download/$asset" -o "$WOK"
+  chmod +x "$WOK"
+  xattr -d com.apple.quarantine "$WOK" 2>/dev/null || true
+fi
+echo "wokwi-cli -> $WOK"
+
 # license stamp (don't clobber an existing one)
 STAMP="$RUNTIME/wokwi-license-stamp"
 if [ ! -f "$STAMP" ]; then
@@ -102,6 +119,15 @@ else
 fi
 rm -rf "$TMP"
 
+# wokwi-cli smoke test (no token needed for --help)
+if "$WOK" --help >/dev/null 2>&1; then echo "wokwi-cli smoke test OK."; else echo "wokwi-cli smoke test FAILED." >&2; exit 1; fi
+
 echo ""
 echo "Done. Open a new terminal (or 'source ~/.zprofile'), then:"
 echo "  ./macos/new-avr-project.sh Lab5 --open"
+echo ""
+echo "wokwi-cli features (screenshots/run/lint) need a free API token:"
+echo "  1) get one at https://wokwi.com/dashboard/ci  (starts 'wok_')"
+echo "  2) persist it yourself, e.g. add to ~/.zprofile:"
+echo "       export WOKWI_CLI_TOKEN=wok_..."
+echo "  Never commit or share the token."
